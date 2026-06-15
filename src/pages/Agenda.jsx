@@ -47,7 +47,6 @@ export default function Agenda() {
 
   function formatarData(data) {
     if (!data) return "-"
-
     return new Date(data).toLocaleDateString("pt-BR")
   }
 
@@ -199,8 +198,8 @@ export default function Agenda() {
         />
       )}
 
-      <div className="min-h-screen bg-slate-100 p-6">
-        <header className="flex items-center justify-between mb-8">
+      <div className="min-h-screen bg-slate-100 p-4 md:p-6">
+        <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6 md:mb-8">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setMenuAberto(true)}
@@ -210,7 +209,7 @@ export default function Agenda() {
             </button>
 
             <div>
-              <h1 className="text-2xl font-semibold text-slate-800">
+              <h1 className="text-2xl md:text-3xl font-semibold text-slate-800">
                 Agenda
               </h1>
 
@@ -220,14 +219,12 @@ export default function Agenda() {
             </div>
           </div>
 
-          <div>
-            <input
-              type="date"
-              value={dataLocalInput(diaSelecionado)}
-              onChange={buscarPorData}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm"
-            />
-          </div>
+          <input
+            type="date"
+            value={dataLocalInput(diaSelecionado)}
+            onChange={buscarPorData}
+            className="w-full md:w-auto rounded-lg border border-slate-300 px-4 py-2 text-sm"
+          />
         </header>
 
         {loading ? (
@@ -236,16 +233,16 @@ export default function Agenda() {
           </div>
         ) : (
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <section className="xl:col-span-2 bg-white rounded-2xl border border-slate-200 p-6">
-              <div className="flex items-center justify-between mb-6">
+            <section className="xl:col-span-2 bg-white rounded-2xl border border-slate-200 p-3 md:p-6 overflow-hidden">
+              <div className="flex items-center justify-between gap-2 mb-4 md:mb-6">
                 <button
                   onClick={irMesAnterior}
-                  className="text-sm text-slate-600 hover:text-indigo-700"
+                  className="text-xs md:text-sm text-slate-600 hover:text-indigo-700 whitespace-nowrap"
                 >
-                  ← Mês anterior
+                  ← <span className="hidden sm:inline">Mês anterior</span>
                 </button>
 
-                <h2 className="text-lg font-semibold text-slate-800 capitalize">
+                <h2 className="text-base md:text-lg font-semibold text-slate-800 capitalize text-center">
                   {mesAtual.toLocaleDateString("pt-BR", {
                     month: "long",
                     year: "numeric",
@@ -254,13 +251,13 @@ export default function Agenda() {
 
                 <button
                   onClick={irProximoMes}
-                  className="text-sm text-slate-600 hover:text-indigo-700"
+                  className="text-xs md:text-sm text-slate-600 hover:text-indigo-700 whitespace-nowrap"
                 >
-                  Próximo mês →
+                  <span className="hidden sm:inline">Próximo mês</span> →
                 </button>
               </div>
 
-              <div className="grid grid-cols-7 gap-2 mb-2 text-center text-xs font-medium text-slate-500">
+              <div className="grid grid-cols-7 gap-1 md:gap-2 mb-2 text-center text-[10px] md:text-xs font-medium text-slate-500">
                 <div>Dom</div>
                 <div>Seg</div>
                 <div>Ter</div>
@@ -270,7 +267,7 @@ export default function Agenda() {
                 <div>Sáb</div>
               </div>
 
-              <div className="grid grid-cols-7 gap-2">
+              <div className="grid grid-cols-7 gap-1 md:gap-2">
                 {diasDoCalendario.map((dia) => {
                   const chave = dataLocalInput(dia)
                   const viagensDia = viagensPorDia[chave] || []
@@ -284,12 +281,16 @@ export default function Agenda() {
                       key={chave}
                       onClick={() => setDiaSelecionado(dia)}
                       className={`
-                        min-h-24
-                        rounded-xl
+                        min-h-[56px]
+                        md:min-h-24
+                        rounded-lg
+                        md:rounded-xl
                         border
-                        p-2
+                        p-1
+                        md:p-2
                         text-left
                         transition
+                        overflow-hidden
                         ${
                           selecionado
                             ? "border-indigo-600 bg-indigo-50"
@@ -302,14 +303,20 @@ export default function Agenda() {
                         }
                       `}
                     >
-                      <p className="text-sm font-medium text-slate-700">
+                      <p className="text-xs md:text-sm font-medium text-slate-700">
                         {dia.getDate()}
                       </p>
 
                       {viagensDia.length > 0 && (
-                        <p className="mt-2 inline-block rounded-full bg-indigo-100 px-2 py-1 text-xs font-medium text-indigo-700">
-                          {viagensDia.length} viagem(ns)
-                        </p>
+                        <>
+                          <span className="mt-1 mx-auto flex md:hidden h-5 w-5 items-center justify-center rounded-full bg-indigo-100 text-[11px] font-semibold text-indigo-700">
+                            {viagensDia.length}
+                          </span>
+
+                          <p className="hidden md:inline-block mt-2 rounded-full bg-indigo-100 px-2 py-1 text-xs font-medium text-indigo-700">
+                            {viagensDia.length} viagem(ns)
+                          </p>
+                        </>
                       )}
                     </button>
                   )
@@ -317,7 +324,7 @@ export default function Agenda() {
               </div>
             </section>
 
-            <aside className="bg-white rounded-2xl border border-slate-200 p-6 h-fit">
+            <aside className="bg-white rounded-2xl border border-slate-200 p-4 md:p-6 h-fit">
               <h2 className="text-lg font-semibold text-slate-800">
                 Viagens do dia {formatarData(diaSelecionado)}
               </h2>
@@ -326,7 +333,7 @@ export default function Agenda() {
                 {viagensDoDiaSelecionado.length} viagem(ns) encontrada(s)
               </p>
 
-              <div className="mt-6 space-y-4">
+              <div className="mt-5 md:mt-6 space-y-4">
                 {viagensDoDiaSelecionado.length === 0 ? (
                   <p className="text-sm text-slate-400">
                     Nenhuma viagem cadastrada para este dia.
@@ -337,7 +344,7 @@ export default function Agenda() {
                       key={viagem.id}
                       className="rounded-xl border border-slate-200 p-4"
                     >
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
                         <div>
                           <p className="font-medium text-slate-800">
                             {viagem.clientes?.nome ||
@@ -360,7 +367,7 @@ export default function Agenda() {
                         </div>
 
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${corStatus(
+                          className={`w-fit px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${corStatus(
                             viagem.status
                           )}`}
                         >
