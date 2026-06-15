@@ -1,9 +1,11 @@
 import { Link, useNavigate } from "react-router-dom"
+import { supabase } from "../services/supabase"
 
 export default function Sidebar({ aberto, onClose }) {
   const navigate = useNavigate()
 
-  function handleLogout() {
+  async function handleLogout() {
+    await supabase.auth.signOut()
     navigate("/login")
   }
 
