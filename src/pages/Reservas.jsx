@@ -4,6 +4,7 @@ import { supabase } from "../services/supabase"
 
 export default function Reservas() {
   const [menuAberto, setMenuAberto] = useState(false)
+  const [detalhesResultadoAberto, setDetalhesResultadoAberto] = useState(false)
   const [clientes, setClientes] = useState([])
   const [salvando, setSalvando] = useState(false)
 
@@ -79,6 +80,8 @@ export default function Reservas() {
       valor_pago: "",
       status_viagem: "Confirmada",
     })
+
+    setDetalhesResultadoAberto(false)
   }
 
   function formatarMoeda(valor) {
@@ -126,7 +129,11 @@ export default function Reservas() {
   const valorRestante = Math.max(valorTotal - valorPago, 0)
 
   const statusPagamento =
-    valorPago > 0 ? (valorRestante === 0 ? "Quitado" : "Sinal pago") : "Reservada"
+    valorPago > 0
+      ? valorRestante === 0
+        ? "Quitado"
+        : "Sinal pago"
+      : "Reservada"
 
   async function salvarReserva(e) {
     e.preventDefault()
@@ -248,102 +255,7 @@ export default function Reservas() {
             onSubmit={salvarReserva}
             className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6"
           >
-            <aside className="order-1 lg:order-2 bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 h-fit shadow-sm min-w-0 lg:sticky lg:top-6">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-base sm:text-lg font-semibold text-slate-800">
-                    Resultado
-                  </h2>
-
-                  <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                    Valor estimado da reserva
-                  </p>
-                </div>
-
-                <span
-                  className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium ${
-                    statusPagamento === "Quitado"
-                      ? "bg-green-50 text-green-700 border border-green-100"
-                      : statusPagamento === "Sinal pago"
-                      ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
-                      : "bg-slate-50 text-slate-600 border border-slate-200"
-                  }`}
-                >
-                  {statusPagamento}
-                </span>
-              </div>
-
-              <div className="mt-5 text-3xl sm:text-4xl font-bold text-indigo-700 break-words">
-                {form.tipo_viagem === "Citytour"
-                  ? formatarMoeda(valorTotal)
-                  : valorKm !== null && valorKm !== undefined
-                  ? formatarMoeda(valorTotal)
-                  : "Em aberto"}
-              </div>
-
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
-                  <p className="text-[11px] text-slate-500">Pago</p>
-                  <p className="text-sm font-semibold text-slate-800 mt-1">
-                    {formatarMoeda(valorPago)}
-                  </p>
-                </div>
-
-                <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
-                  <p className="text-[11px] text-slate-500">Restante</p>
-                  <p className="text-sm font-semibold text-slate-800 mt-1">
-                    {formatarMoeda(valorRestante)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-5 border-t border-slate-100 pt-4 text-xs text-slate-500 space-y-2">
-                <p>
-                  Tipo de viagem: <b>{form.tipo_viagem}</b>
-                </p>
-
-                {form.tipo_viagem === "Citytour" && (
-                  <p>
-                    Período:{" "}
-                    <b>
-                      {form.periodo_citytour} - {formatarMoeda(valorCitytour)}
-                    </b>
-                  </p>
-                )}
-
-                <p>
-                  KM total: <b>{form.km_total || 0} km</b>
-                </p>
-
-                <p>
-                  Tipo de ônibus:{" "}
-                  <b>{form.tipo_onibus || "Não selecionado"}</b>
-                </p>
-
-                <p>
-                  Valor por KM:{" "}
-                  <b>
-                    {valorKm !== null && valorKm !== undefined
-                      ? formatarMoeda(valorKm)
-                      : "Em aberto"}
-                  </b>
-                </p>
-
-                <p>
-                  Diárias extras: <b>{form.dias_parados || 0}</b>
-                </p>
-
-                <p>
-                  Nº de carros: <b>{numeroCarros}</b>
-                </p>
-
-                <p>
-                  Despesa motorista: <b>{form.despesa_motorista}</b>
-                </p>
-              </div>
-            </aside>
-
-            <section className="order-2 lg:order-1 lg:col-span-2 space-y-4 sm:space-y-5">
+            <section className="lg:col-span-2 space-y-4 sm:space-y-5">
               <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm">
                 <div className="mb-4">
                   <h2 className="text-base sm:text-lg font-semibold text-slate-800">
@@ -555,7 +467,9 @@ export default function Reservas() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className={labelClass}>Quantidade de motoristas</label>
+                    <label className={labelClass}>
+                      Quantidade de motoristas
+                    </label>
 
                     <select
                       name="quantidade_motoristas"
@@ -615,7 +529,9 @@ export default function Reservas() {
                   </div>
 
                   <div>
-                    <label className={labelClass}>Valor de entrada / sinal</label>
+                    <label className={labelClass}>
+                      Valor de entrada / sinal
+                    </label>
 
                     <input
                       name="valor_pago"
@@ -627,26 +543,136 @@ export default function Reservas() {
                     />
                   </div>
                 </div>
-
-                <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-5">
-                  <button
-                    type="button"
-                    onClick={limparFormulario}
-                    className="w-full sm:w-auto px-4 py-2.5 rounded-lg border border-slate-300 text-slate-600 text-sm font-medium hover:bg-slate-50"
-                  >
-                    Limpar
-                  </button>
-
-                  <button
-                    type="submit"
-                    disabled={salvando}
-                    className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-medium shadow-sm"
-                  >
-                    {salvando ? "Salvando..." : "Salvar reserva"}
-                  </button>
-                </div>
               </div>
             </section>
+
+            <aside className="lg:col-span-1 bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 h-fit shadow-sm min-w-0 lg:sticky lg:top-6">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-base sm:text-lg font-semibold text-slate-800">
+                    Resultado
+                  </h2>
+
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                    Valor estimado da reserva
+                  </p>
+                </div>
+
+                <span
+                  className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium ${
+                    statusPagamento === "Quitado"
+                      ? "bg-green-50 text-green-700 border border-green-100"
+                      : statusPagamento === "Sinal pago"
+                      ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
+                      : "bg-slate-50 text-slate-600 border border-slate-200"
+                  }`}
+                >
+                  {statusPagamento}
+                </span>
+              </div>
+
+              <div className="mt-5 text-3xl sm:text-4xl font-bold text-indigo-700 break-words">
+                {form.tipo_viagem === "Citytour"
+                  ? formatarMoeda(valorTotal)
+                  : valorKm !== null && valorKm !== undefined
+                  ? formatarMoeda(valorTotal)
+                  : "Em aberto"}
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setDetalhesResultadoAberto(!detalhesResultadoAberto)
+                }
+                className="mt-4 w-full rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100"
+              >
+                {detalhesResultadoAberto ? "Ocultar detalhes" : "+ Detalhes"}
+              </button>
+
+              {detalhesResultadoAberto && (
+                <div className="mt-4">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                      <p className="text-[11px] text-slate-500">Pago</p>
+                      <p className="text-sm font-semibold text-slate-800 mt-1">
+                        {formatarMoeda(valorPago)}
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                      <p className="text-[11px] text-slate-500">Restante</p>
+                      <p className="text-sm font-semibold text-slate-800 mt-1">
+                        {formatarMoeda(valorRestante)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 border-t border-slate-100 pt-4 text-xs text-slate-500 space-y-2">
+                    <p>
+                      Tipo de viagem: <b>{form.tipo_viagem}</b>
+                    </p>
+
+                    {form.tipo_viagem === "Citytour" && (
+                      <p>
+                        Período:{" "}
+                        <b>
+                          {form.periodo_citytour} -{" "}
+                          {formatarMoeda(valorCitytour)}
+                        </b>
+                      </p>
+                    )}
+
+                    <p>
+                      KM total: <b>{form.km_total || 0} km</b>
+                    </p>
+
+                    <p>
+                      Tipo de ônibus:{" "}
+                      <b>{form.tipo_onibus || "Não selecionado"}</b>
+                    </p>
+
+                    <p>
+                      Valor por KM:{" "}
+                      <b>
+                        {valorKm !== null && valorKm !== undefined
+                          ? formatarMoeda(valorKm)
+                          : "Em aberto"}
+                      </b>
+                    </p>
+
+                    <p>
+                      Diárias extras: <b>{form.dias_parados || 0}</b>
+                    </p>
+
+                    <p>
+                      Nº de carros: <b>{numeroCarros}</b>
+                    </p>
+
+                    <p>
+                      Despesa motorista: <b>{form.despesa_motorista}</b>
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-col-reverse sm:flex-row lg:flex-col-reverse gap-3 pt-5">
+                <button
+                  type="button"
+                  onClick={limparFormulario}
+                  className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-600 text-sm font-medium hover:bg-slate-50"
+                >
+                  Limpar
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={salvando}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-medium shadow-sm"
+                >
+                  {salvando ? "Salvando..." : "Salvar reserva"}
+                </button>
+              </div>
+            </aside>
           </form>
         </div>
       </div>
