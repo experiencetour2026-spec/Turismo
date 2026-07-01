@@ -10,6 +10,9 @@ export default function ViagemDetalhes() {
   const voltar = searchParams.get("voltar")
 
   const [menuAberto, setMenuAberto] = useState(false)
+  const [detalhesFinanceiroAberto, setDetalhesFinanceiroAberto] =
+    useState(false)
+
   const [clientes, setClientes] = useState([])
   const [recebimentos, setRecebimentos] = useState([])
   const [loading, setLoading] = useState(true)
@@ -115,6 +118,15 @@ export default function ViagemDetalhes() {
     })
   }
 
+  function voltarParaOrigem() {
+    if (voltar === "relatorios") {
+      navigate("/relatorios")
+      return
+    }
+
+    navigate("/viagens")
+  }
+
   function formatarMoeda(valor) {
     return Number(valor || 0).toLocaleString("pt-BR", {
       style: "currency",
@@ -124,13 +136,39 @@ export default function ViagemDetalhes() {
 
   function formatarData(data) {
     if (!data) return "-"
-    return new Date(data).toLocaleString("pt-BR")
+
+    return new Date(data).toLocaleString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
+
+  function statusPagamentoClasse(status) {
+    if (status === "Quitado") {
+      return "bg-green-50 text-green-700 border border-green-100"
+    }
+
+    if (status === "Pagamento Parcial") {
+      return "bg-indigo-50 text-indigo-700 border border-indigo-100"
+    }
+
+    return "bg-slate-50 text-slate-600 border border-slate-200"
+  }
+
+  function statusViagemClasse(status) {
+    if (status === "Cancelada") {
+      return "bg-red-50 text-red-700 border border-red-100"
+    }
+
+    return "bg-green-50 text-green-700 border border-green-100"
   }
 
   const quantidadeCarros = Number(form.numero_carros || 1)
 
-  const valorKm =
-    Number(form.km_total || 0) * VALOR_KM * quantidadeCarros
+  const valorKm = Number(form.km_total || 0) * VALOR_KM * quantidadeCarros
 
   const valorDiasParados =
     Number(form.dias_parados || 0) * VALOR_DIARIA_PARADO * quantidadeCarros
@@ -201,7 +239,8 @@ export default function ViagemDetalhes() {
 
     const novoValorPago = valorPago + valor
     const novoValorRestante = Math.max(valorTotal - novoValorPago, 0)
-    const novoStatus = novoValorRestante === 0 ? "Quitado" : "Pagamento Parcial"
+    const novoStatus =
+      novoValorRestante === 0 ? "Quitado" : "Pagamento Parcial"
 
     setSalvandoRecebimento(true)
 
@@ -251,339 +290,565 @@ export default function ViagemDetalhes() {
     carregarRecebimentos()
   }
 
+  const inputClass =
+    "w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+
+  const labelClass = "block text-xs font-medium text-slate-500 mb-1"
+
   return (
     <>
       <Sidebar aberto={menuAberto} onClose={() => setMenuAberto(false)} />
 
-      {menuAberto && (
-        <div
-          onClick={() => setMenuAberto(false)}
-          className="fixed inset-0 bg-black/40 z-40"
-        />
-      )}
-
-      <div className="min-h-screen bg-slate-100 p-6">
-        <header className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setMenuAberto(true)}
-              className="text-slate-700 text-2xl hover:text-indigo-700"
-            >
-              ☰
-            </button>
-
-            <div>
-              <h1 className="text-2xl font-semibold text-slate-800">
-                Detalhes da Viagem
-              </h1>
-
-              <p className="text-sm text-slate-500">
-                Visualize, edite e acompanhe os recebimentos
-              </p>
-            </div>
-          </div>
-
-          <button
-            onClick={() => navigate("/viagens")}
-            className="text-sm text-slate-600 hover:text-indigo-700"
-          >
-            Voltar
-          </button>
-        </header>
-
-        {loading ? (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6">
-            <p className="text-sm text-slate-500">Carregando viagem...</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <form
-              onSubmit={salvarAlteracoes}
-              className="xl:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 space-y-4"
-            >
-              <h2 className="text-lg font-semibold text-slate-800">
-                Dados da viagem
-              </h2>
-
-              <select
-                name="cliente_id"
-                value={form.cliente_id}
-                onChange={handleChange}
-                required
-                className="w-full rounded-lg border border-slate-300 px-4 py-2"
-              >
-                <option value="">Selecione o cliente</option>
-
-                {clientes.map((cliente) => (
-                  <option key={cliente.id} value={cliente.id}>
-                    {cliente.nome} - {cliente.cpf_cnpj}
-                  </option>
-                ))}
-              </select>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <select
-                  name="status_viagem"
-                  value={form.status_viagem}
-                  onChange={handleChange}
-                  className="rounded-lg border border-slate-300 px-4 py-2"
+      <div className="min-h-screen bg-slate-100 px-3 py-4 sm:px-4 md:p-6">
+        <div className="mx-auto max-w-6xl">
+          <header className="mb-4 sm:mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <button
+                  type="button"
+                  onClick={() => setMenuAberto(true)}
+                  className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-700 text-2xl shadow-sm hover:text-indigo-700"
+                  aria-label="Abrir menu"
                 >
-                  <option value="Confirmada">Confirmada</option>
-                  <option value="Cancelada">Cancelada</option>
-                </select>
+                  ☰
+                </button>
 
-                <select
-                  name="tipo_viagem"
-                  value={form.tipo_viagem}
-                  onChange={handleChange}
-                  className="rounded-lg border border-slate-300 px-4 py-2"
-                >
-                  <option>Citytour</option>
-                  <option>Turismo</option>
-                </select>
+                <div className="min-w-0">
+                  <h1 className="text-xl sm:text-2xl font-semibold text-slate-800">
+                    Detalhes da Viagem
+                  </h1>
 
-                <input
-                  name="numero_carros"
-                  type="number"
-                  min="1"
-                  value={form.numero_carros}
-                  onChange={handleChange}
-                  placeholder="Nº de Carros"
-                  required
-                  className="rounded-lg border border-slate-300 px-4 py-2"
-                />
-
-                <input
-                  name="numero_carro"
-                  value={form.numero_carro}
-                  onChange={handleChange}
-                  placeholder="Nº do carro"
-                  className="rounded-lg border border-slate-300 px-4 py-2"
-                />
-
-                <input
-                  name="matricula_motorista_1"
-                  value={form.matricula_motorista_1}
-                  onChange={handleChange}
-                  placeholder="Matrícula + Motorista 1"
-                  className="rounded-lg border border-slate-300 px-4 py-2"
-                />
-
-                {Number(form.quantidade_motoristas) === 2 && (
-                  <input
-                    name="matricula_motorista_2"
-                    value={form.matricula_motorista_2}
-                    onChange={handleChange}
-                    placeholder="Matrícula + Motorista 2"
-                    className="rounded-lg border border-slate-300 px-4 py-2"
-                  />
-                )}
-
-                <input
-                  name="origem"
-                  value={form.origem}
-                  onChange={handleChange}
-                  placeholder="Origem"
-                  required
-                  className="rounded-lg border border-slate-300 px-4 py-2"
-                />
-
-                <input
-                  name="destino"
-                  value={form.destino}
-                  onChange={handleChange}
-                  placeholder="Destino"
-                  required
-                  className="rounded-lg border border-slate-300 px-4 py-2"
-                />
-
-                <input
-                  name="km_total"
-                  type="number"
-                  value={form.km_total}
-                  onChange={handleChange}
-                  placeholder="KM total"
-                  required
-                  className="rounded-lg border border-slate-300 px-4 py-2"
-                />
-
-                <input
-                  name="dias_parados"
-                  type="number"
-                  value={form.dias_parados}
-                  onChange={handleChange}
-                  placeholder="Quantidade de dias parados"
-                  className="rounded-lg border border-slate-300 px-4 py-2"
-                />
-
-                <input
-                  name="data_saida"
-                  type="datetime-local"
-                  value={form.data_saida}
-                  onChange={handleChange}
-                  required
-                  className="rounded-lg border border-slate-300 px-4 py-2"
-                />
-
-                <input
-                  name="data_retorno"
-                  type="datetime-local"
-                  value={form.data_retorno}
-                  onChange={handleChange}
-                  required
-                  className="rounded-lg border border-slate-300 px-4 py-2"
-                />
-
-                <select
-                  name="quantidade_motoristas"
-                  value={form.quantidade_motoristas}
-                  onChange={handleChange}
-                  className="rounded-lg border border-slate-300 px-4 py-2"
-                >
-                  <option value="1">1 Motorista</option>
-                  <option value="2">2 Motoristas</option>
-                </select>
-
-                <select
-                  name="despesa_motorista"
-                  value={form.despesa_motorista}
-                  onChange={handleChange}
-                  className="rounded-lg border border-slate-300 px-4 py-2"
-                >
-                  <option value="Cliente">Despesa motorista: Cliente</option>
-                  <option value="Empresa">Despesa motorista: Empresa</option>
-                </select>
-
-                {form.despesa_motorista === "Empresa" && (
-                  <input
-                    name="valor_despesa_motorista"
-                    type="number"
-                    value={form.valor_despesa_motorista}
-                    onChange={handleChange}
-                    placeholder="Valor da despesa do motorista"
-                    className="rounded-lg border border-slate-300 px-4 py-2"
-                  />
-                )}
-
-                <select
-                  name="forma_pagamento"
-                  value={form.forma_pagamento}
-                  onChange={handleChange}
-                  className="rounded-lg border border-slate-300 px-4 py-2"
-                >
-                  <option>Pix</option>
-                  <option>Dinheiro</option>
-                  <option>Faturado</option>
-                </select>
-              </div>
-
-              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-                <p className="text-sm text-slate-500">Valor total</p>
-
-                <p className="text-3xl font-semibold text-indigo-700 mt-1">
-                  {formatarMoeda(valorTotal)}
-                </p>
-
-                <div className="mt-4 text-xs text-slate-500 space-y-1">
-                  <p>Valor KM: <b>{formatarMoeda(valorKm)}</b></p>
-                  <p>Dias parados: <b>{formatarMoeda(valorDiasParados)}</b></p>
-                  <p>Despesa motorista: <b>{formatarMoeda(valorDespesaMotorista)}</b></p>
-                  <p>Valor recebido: <b>{formatarMoeda(valorPago)}</b></p>
-                  <p>Valor restante: <b>{formatarMoeda(valorRestante)}</b></p>
-                  <p>Status pagamento: <b>{statusPagamento}</b></p>
+                  <p className="text-xs sm:text-sm text-slate-500">
+                    Visualize, edite e acompanhe os recebimentos
+                  </p>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => navigate("/viagens")}
-                  className="px-4 py-2 rounded-lg border border-slate-300 text-slate-600"
-                >
-                  Cancelar
-                </button>
-
-                <button
-                  disabled={salvando}
-                  className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white"
-                >
-                  {salvando ? "Salvando..." : "Salvar alterações"}
-                </button>
-              </div>
-            </form>
-
-            <aside className="space-y-6">
-              <form
-                onSubmit={lancarRecebimento}
-                className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4"
+              <button
+                type="button"
+                onClick={voltarParaOrigem}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-white border border-slate-200 text-sm text-slate-600 hover:text-indigo-700 shadow-sm"
               >
-                <h2 className="text-lg font-semibold text-slate-800">
-                  Lançar recebimento
-                </h2>
+                Voltar
+              </button>
+            </div>
+          </header>
 
-                <input
-                  type="number"
-                  value={novoRecebimento}
-                  onChange={(e) => setNovoRecebimento(e.target.value)}
-                  placeholder="Valor recebido"
-                  className="w-full rounded-lg border border-slate-300 px-4 py-2"
-                />
+          {loading ? (
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm">
+              <p className="text-sm text-slate-500">Carregando viagem...</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+              <form
+                onSubmit={salvarAlteracoes}
+                className="xl:col-span-2 space-y-4 sm:space-y-5"
+              >
+                <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm">
+                  <div className="flex items-start justify-between gap-3 mb-4">
+                    <div>
+                      <h2 className="text-base sm:text-lg font-semibold text-slate-800">
+                        Cliente e status
+                      </h2>
 
-                <textarea
-                  value={observacaoRecebimento}
-                  onChange={(e) => setObservacaoRecebimento(e.target.value)}
-                  placeholder="Observação"
-                  rows="3"
-                  className="w-full rounded-lg border border-slate-300 px-4 py-2"
-                />
+                      <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                        Dados principais da viagem.
+                      </p>
+                    </div>
 
-                <button
-                  disabled={salvandoRecebimento}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg"
-                >
-                  {salvandoRecebimento
-                    ? "Salvando..."
-                    : "Registrar recebimento"}
-                </button>
+                    <span
+                      className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium ${statusViagemClasse(
+                        form.status_viagem
+                      )}`}
+                    >
+                      {form.status_viagem}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                      <label className={labelClass}>Cliente</label>
+
+                      <select
+                        name="cliente_id"
+                        value={form.cliente_id}
+                        onChange={handleChange}
+                        required
+                        className={inputClass}
+                      >
+                        <option value="">Selecione o cliente</option>
+
+                        {clientes.map((cliente) => (
+                          <option key={cliente.id} value={cliente.id}>
+                            {cliente.nome} - {cliente.cpf_cnpj}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className={labelClass}>Status da viagem</label>
+
+                      <select
+                        name="status_viagem"
+                        value={form.status_viagem}
+                        onChange={handleChange}
+                        className={inputClass}
+                      >
+                        <option value="Confirmada">Confirmada</option>
+                        <option value="Cancelada">Cancelada</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className={labelClass}>Tipo de viagem</label>
+
+                      <select
+                        name="tipo_viagem"
+                        value={form.tipo_viagem}
+                        onChange={handleChange}
+                        className={inputClass}
+                      >
+                        <option>Citytour</option>
+                        <option>Turismo</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className={labelClass}>Forma de pagamento</label>
+
+                      <select
+                        name="forma_pagamento"
+                        value={form.forma_pagamento}
+                        onChange={handleChange}
+                        className={inputClass}
+                      >
+                        <option>Pix</option>
+                        <option>Dinheiro</option>
+                        <option>Faturado</option>
+                      </select>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm">
+                  <div className="mb-4">
+                    <h2 className="text-base sm:text-lg font-semibold text-slate-800">
+                      Veículo e motorista
+                    </h2>
+
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                      Informe carro, quantidade de motoristas e despesas.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelClass}>Nº de carros</label>
+
+                      <input
+                        name="numero_carros"
+                        type="number"
+                        min="1"
+                        value={form.numero_carros}
+                        onChange={handleChange}
+                        required
+                        className={inputClass}
+                      />
+                    </div>
+
+                    <div>
+                      <label className={labelClass}>Nº do carro</label>
+
+                      <input
+                        name="numero_carro"
+                        value={form.numero_carro}
+                        onChange={handleChange}
+                        placeholder="Nº do carro"
+                        className={inputClass}
+                      />
+                    </div>
+
+                    <div>
+                      <label className={labelClass}>
+                        Quantidade de motoristas
+                      </label>
+
+                      <select
+                        name="quantidade_motoristas"
+                        value={form.quantidade_motoristas}
+                        onChange={handleChange}
+                        className={inputClass}
+                      >
+                        <option value="1">1 Motorista</option>
+                        <option value="2">2 Motoristas</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className={labelClass}>
+                        Matrícula + Motorista 1
+                      </label>
+
+                      <input
+                        name="matricula_motorista_1"
+                        value={form.matricula_motorista_1}
+                        onChange={handleChange}
+                        placeholder="Matrícula + Motorista 1"
+                        className={inputClass}
+                      />
+                    </div>
+
+                    {Number(form.quantidade_motoristas) === 2 && (
+                      <div>
+                        <label className={labelClass}>
+                          Matrícula + Motorista 2
+                        </label>
+
+                        <input
+                          name="matricula_motorista_2"
+                          value={form.matricula_motorista_2}
+                          onChange={handleChange}
+                          placeholder="Matrícula + Motorista 2"
+                          className={inputClass}
+                        />
+                      </div>
+                    )}
+
+                    <div>
+                      <label className={labelClass}>Despesa motorista</label>
+
+                      <select
+                        name="despesa_motorista"
+                        value={form.despesa_motorista}
+                        onChange={handleChange}
+                        className={inputClass}
+                      >
+                        <option value="Cliente">Cliente</option>
+                        <option value="Empresa">Empresa</option>
+                      </select>
+                    </div>
+
+                    {form.despesa_motorista === "Empresa" && (
+                      <div>
+                        <label className={labelClass}>
+                          Valor da despesa do motorista
+                        </label>
+
+                        <input
+                          name="valor_despesa_motorista"
+                          type="number"
+                          value={form.valor_despesa_motorista}
+                          onChange={handleChange}
+                          placeholder="Valor da despesa"
+                          className={inputClass}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </section>
+
+                <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm">
+                  <div className="mb-4">
+                    <h2 className="text-base sm:text-lg font-semibold text-slate-800">
+                      Roteiro e datas
+                    </h2>
+
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                      Origem, destino, KM e período da viagem.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelClass}>Origem</label>
+
+                      <input
+                        name="origem"
+                        value={form.origem}
+                        onChange={handleChange}
+                        required
+                        placeholder="Origem"
+                        className={inputClass}
+                      />
+                    </div>
+
+                    <div>
+                      <label className={labelClass}>Destino</label>
+
+                      <input
+                        name="destino"
+                        value={form.destino}
+                        onChange={handleChange}
+                        required
+                        placeholder="Destino"
+                        className={inputClass}
+                      />
+                    </div>
+
+                    <div>
+                      <label className={labelClass}>KM total</label>
+
+                      <input
+                        name="km_total"
+                        type="number"
+                        value={form.km_total}
+                        onChange={handleChange}
+                        required
+                        placeholder="KM total"
+                        className={inputClass}
+                      />
+                    </div>
+
+                    <div>
+                      <label className={labelClass}>
+                        Quantidade de dias parados
+                      </label>
+
+                      <input
+                        name="dias_parados"
+                        type="number"
+                        value={form.dias_parados}
+                        onChange={handleChange}
+                        placeholder="Dias parados"
+                        className={inputClass}
+                      />
+                    </div>
+
+                    <div>
+                      <label className={labelClass}>Data de saída</label>
+
+                      <input
+                        name="data_saida"
+                        type="datetime-local"
+                        value={form.data_saida}
+                        onChange={handleChange}
+                        required
+                        className={inputClass}
+                      />
+                    </div>
+
+                    <div>
+                      <label className={labelClass}>Data de retorno</label>
+
+                      <input
+                        name="data_retorno"
+                        type="datetime-local"
+                        value={form.data_retorno}
+                        onChange={handleChange}
+                        required
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-5">
+                    <button
+                      type="button"
+                      onClick={voltarParaOrigem}
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-lg border border-slate-300 text-slate-600 text-sm font-medium hover:bg-slate-50"
+                    >
+                      Cancelar
+                    </button>
+
+                    <button
+                      type="submit"
+                      disabled={salvando}
+                      className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-medium shadow-sm"
+                    >
+                      {salvando ? "Salvando..." : "Salvar alterações"}
+                    </button>
+                  </div>
+                </section>
               </form>
 
-              <section className="bg-white rounded-2xl border border-slate-200 p-6">
-                <h2 className="text-lg font-semibold text-slate-800 mb-4">
-                  Histórico de recebimentos
-                </h2>
+              <aside className="space-y-4 sm:space-y-5">
+                <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h2 className="text-base sm:text-lg font-semibold text-slate-800">
+                        Resumo financeiro
+                      </h2>
 
-                {recebimentos.length === 0 ? (
-                  <p className="text-sm text-slate-500">
-                    Nenhum recebimento lançado.
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {recebimentos.map((item) => (
-                      <div
-                        key={item.id}
-                        className="border border-slate-200 rounded-xl p-4"
-                      >
-                        <p className="font-medium text-green-700">
-                          {formatarMoeda(item.valor)}
-                        </p>
+                      <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                        Valor total da viagem
+                      </p>
+                    </div>
 
-                        <p className="text-xs text-slate-500 mt-1">
-                          {formatarData(item.created_at)}
-                        </p>
-
-                        {item.observacao && (
-                          <p className="text-sm text-slate-600 mt-2">
-                            {item.observacao}
-                          </p>
-                        )}
-                      </div>
-                    ))}
+                    <span
+                      className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium ${statusPagamentoClasse(
+                        statusPagamento
+                      )}`}
+                    >
+                      {statusPagamento}
+                    </span>
                   </div>
-                )}
-              </section>
-            </aside>
-          </div>
-        )}
+
+                  <p className="text-3xl sm:text-4xl font-bold text-indigo-700 mt-5 break-words">
+                    {formatarMoeda(valorTotal)}
+                  </p>
+
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                      <p className="text-[11px] text-slate-500">Recebido</p>
+
+                      <p className="text-sm font-semibold text-slate-800 mt-1">
+                        {formatarMoeda(valorPago)}
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                      <p className="text-[11px] text-slate-500">Restante</p>
+
+                      <p className="text-sm font-semibold text-slate-800 mt-1">
+                        {formatarMoeda(valorRestante)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDetalhesFinanceiroAberto(!detalhesFinanceiroAberto)
+                    }
+                    className="mt-4 w-full rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100"
+                  >
+                    {detalhesFinanceiroAberto
+                      ? "Ocultar detalhes"
+                      : "+ Detalhes"}
+                  </button>
+
+                  {detalhesFinanceiroAberto && (
+                    <div className="mt-4 border-t border-slate-100 pt-4 text-xs text-slate-500 space-y-2">
+                      <p>
+                        Valor KM: <b>{formatarMoeda(valorKm)}</b>
+                      </p>
+
+                      <p>
+                        Dias parados:{" "}
+                        <b>{formatarMoeda(valorDiasParados)}</b>
+                      </p>
+
+                      <p>
+                        Despesa motorista:{" "}
+                        <b>{formatarMoeda(valorDespesaMotorista)}</b>
+                      </p>
+
+                      <p>
+                        Valor recebido: <b>{formatarMoeda(valorPago)}</b>
+                      </p>
+
+                      <p>
+                        Valor restante:{" "}
+                        <b>{formatarMoeda(valorRestante)}</b>
+                      </p>
+
+                      <p>
+                        Status pagamento: <b>{statusPagamento}</b>
+                      </p>
+                    </div>
+                  )}
+                </section>
+
+                <form
+                  onSubmit={lancarRecebimento}
+                  className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 space-y-4 shadow-sm"
+                >
+                  <div>
+                    <h2 className="text-base sm:text-lg font-semibold text-slate-800">
+                      Lançar recebimento
+                    </h2>
+
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                      Registre um novo pagamento recebido.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>Valor recebido</label>
+
+                    <input
+                      type="number"
+                      value={novoRecebimento}
+                      onChange={(e) => setNovoRecebimento(e.target.value)}
+                      placeholder="Valor recebido"
+                      className={inputClass}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>Observação</label>
+
+                    <textarea
+                      value={observacaoRecebimento}
+                      onChange={(e) =>
+                        setObservacaoRecebimento(e.target.value)
+                      }
+                      placeholder="Observação"
+                      rows="3"
+                      className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={salvandoRecebimento}
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed text-white py-2.5 rounded-lg text-sm font-medium shadow-sm"
+                  >
+                    {salvandoRecebimento
+                      ? "Salvando..."
+                      : "Registrar recebimento"}
+                  </button>
+                </form>
+
+                <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm">
+                  <h2 className="text-base sm:text-lg font-semibold text-slate-800">
+                    Histórico de recebimentos
+                  </h2>
+
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1 mb-4">
+                    Pagamentos já registrados nesta viagem.
+                  </p>
+
+                  {recebimentos.length === 0 ? (
+                    <div className="py-6 text-center">
+                      <p className="text-sm text-slate-500">
+                        Nenhum recebimento lançado.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {recebimentos.map((item) => (
+                        <article
+                          key={item.id}
+                          className="border border-slate-200 rounded-xl p-4"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="font-semibold text-green-700">
+                                {formatarMoeda(item.valor)}
+                              </p>
+
+                              <p className="text-xs text-slate-500 mt-1">
+                                {formatarData(item.created_at)}
+                              </p>
+                            </div>
+                          </div>
+
+                          {item.observacao && (
+                            <p className="text-sm text-slate-600 mt-3 break-words">
+                              {item.observacao}
+                            </p>
+                          )}
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </section>
+              </aside>
+            </div>
+          )}
+        </div>
       </div>
     </>
   )
