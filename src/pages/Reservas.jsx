@@ -59,6 +59,28 @@ export default function Reservas() {
     })
   }
 
+  function limparFormulario() {
+    setForm({
+      cliente_id: "",
+      tipo_viagem: "Citytour",
+      periodo_citytour: "Integral",
+      numero_carros: 1,
+      origem: "",
+      destino: "",
+      km_total: "",
+      tipo_onibus: "",
+      data_saida: "",
+      data_retorno: "",
+      dias_parados: "",
+      quantidade_motoristas: 1,
+      despesa_motorista: "Cliente",
+      valor_despesa_motorista: "",
+      forma_pagamento: "Pix",
+      valor_pago: "",
+      status_viagem: "Confirmada",
+    })
+  }
+
   function formatarMoeda(valor) {
     return Number(valor || 0).toLocaleString("pt-BR", {
       style: "currency",
@@ -185,332 +207,448 @@ export default function Reservas() {
         : "Reserva cadastrada com sucesso."
     )
 
-    setForm({
-      cliente_id: "",
-      tipo_viagem: "Citytour",
-      periodo_citytour: "Integral",
-      numero_carros: 1,
-      origem: "",
-      destino: "",
-      km_total: "",
-      tipo_onibus: "",
-      data_saida: "",
-      data_retorno: "",
-      dias_parados: "",
-      quantidade_motoristas: 1,
-      despesa_motorista: "Cliente",
-      valor_despesa_motorista: "",
-      forma_pagamento: "Pix",
-      valor_pago: "",
-      status_viagem: "Confirmada",
-    })
+    limparFormulario()
   }
+
+  const inputClass =
+    "w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+
+  const labelClass = "block text-xs font-medium text-slate-500 mb-1"
 
   return (
     <>
       <Sidebar aberto={menuAberto} onClose={() => setMenuAberto(false)} />
 
       <div className="min-h-screen bg-slate-100 px-3 py-4 sm:px-4 md:p-6">
-        <header className="flex items-start sm:items-center gap-3 sm:gap-4 mb-5 sm:mb-8">
-          <button
-            type="button"
-            onClick={() => setMenuAberto(true)}
-            className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-700 text-2xl shadow-sm hover:text-indigo-700"
-            aria-label="Abrir menu"
+        <div className="mx-auto max-w-6xl">
+          <header className="mb-4 sm:mb-6">
+            <div className="flex items-start gap-3">
+              <button
+                type="button"
+                onClick={() => setMenuAberto(true)}
+                className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-700 text-2xl shadow-sm hover:text-indigo-700"
+                aria-label="Abrir menu"
+              >
+                ☰
+              </button>
+
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-2xl font-semibold text-slate-800">
+                  Reservas de Viagens
+                </h1>
+
+                <p className="text-xs sm:text-sm text-slate-500">
+                  Cadastro, orçamento e reserva vinculada ao cliente
+                </p>
+              </div>
+            </div>
+          </header>
+
+          <form
+            onSubmit={salvarReserva}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6"
           >
-            ☰
-          </button>
+            <aside className="order-1 lg:order-2 bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 h-fit shadow-sm min-w-0 lg:sticky lg:top-6">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-base sm:text-lg font-semibold text-slate-800">
+                    Resultado
+                  </h2>
 
-          <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl font-semibold text-slate-800">
-              Reservas de Viagens
-            </h1>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                    Valor estimado da reserva
+                  </p>
+                </div>
 
-            <p className="text-xs sm:text-sm text-slate-500">
-              Cadastro, orçamento e reserva vinculada ao cliente
-            </p>
-          </div>
-        </header>
-
-        <form
-          onSubmit={salvarReserva}
-          className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6"
-        >
-          <section className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 space-y-4 shadow-sm min-w-0">
-            <div>
-              <h2 className="text-base sm:text-lg font-semibold text-slate-800">
-                Dados da reserva
-              </h2>
-
-              <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                Preencha as informações para gerar o orçamento da viagem.
-              </p>
-            </div>
-
-            <select
-              name="cliente_id"
-              value={form.cliente_id}
-              onChange={handleChange}
-              required
-              className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
-            >
-              <option value="">Selecione o cliente</option>
-
-              {clientes.map((cliente) => (
-                <option key={cliente.id} value={cliente.id}>
-                  {cliente.nome} - {cliente.cpf_cnpj}
-                </option>
-              ))}
-            </select>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <select
-                name="tipo_viagem"
-                value={form.tipo_viagem}
-                onChange={handleChange}
-                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
-              >
-                <option>Citytour</option>
-                <option>Turismo</option>
-              </select>
-
-              {form.tipo_viagem === "Citytour" && (
-                <select
-                  name="periodo_citytour"
-                  value={form.periodo_citytour}
-                  onChange={handleChange}
-                  className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
+                <span
+                  className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium ${
+                    statusPagamento === "Quitado"
+                      ? "bg-green-50 text-green-700 border border-green-100"
+                      : statusPagamento === "Sinal pago"
+                      ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
+                      : "bg-slate-50 text-slate-600 border border-slate-200"
+                  }`}
                 >
-                  <option value="Integral">
-                    Período Integral - R$ 2.000,00
-                  </option>
-                  <option value="Meio Período">
-                    Meio Período - R$ 1.800,00
-                  </option>
-                </select>
-              )}
+                  {statusPagamento}
+                </span>
+              </div>
 
-              <input
-                name="numero_carros"
-                type="number"
-                min="1"
-                value={form.numero_carros}
-                onChange={handleChange}
-                placeholder="Nº de Carros"
-                required
-                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
-              />
+              <div className="mt-5 text-3xl sm:text-4xl font-bold text-indigo-700 break-words">
+                {form.tipo_viagem === "Citytour"
+                  ? formatarMoeda(valorTotal)
+                  : valorKm !== null && valorKm !== undefined
+                  ? formatarMoeda(valorTotal)
+                  : "Em aberto"}
+              </div>
 
-              <input
-                name="origem"
-                value={form.origem}
-                onChange={handleChange}
-                placeholder="Origem"
-                required
-                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
-              />
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                  <p className="text-[11px] text-slate-500">Pago</p>
+                  <p className="text-sm font-semibold text-slate-800 mt-1">
+                    {formatarMoeda(valorPago)}
+                  </p>
+                </div>
 
-              <input
-                name="destino"
-                value={form.destino}
-                onChange={handleChange}
-                placeholder="Destino"
-                required
-                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
-              />
+                <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                  <p className="text-[11px] text-slate-500">Restante</p>
+                  <p className="text-sm font-semibold text-slate-800 mt-1">
+                    {formatarMoeda(valorRestante)}
+                  </p>
+                </div>
+              </div>
 
-              <input
-                name="km_total"
-                type="number"
-                value={form.km_total}
-                onChange={handleChange}
-                placeholder="Km Total"
-                required
-                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
-              />
-
-              <select
-                name="tipo_onibus"
-                value={form.tipo_onibus}
-                onChange={handleChange}
-                required
-                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
-              >
-                <option value="">Selecione o tipo de ônibus</option>
-
-                {tiposOnibus.map((item) => (
-                  <option key={item.nome} value={item.nome}>
-                    {item.nome}
-                    {item.valorKm
-                      ? ` - ${formatarMoeda(item.valorKm)} por KM`
-                      : " - Valor em aberto"}
-                  </option>
-                ))}
-              </select>
-
-              <input
-                name="dias_parados"
-                type="number"
-                value={form.dias_parados}
-                onChange={handleChange}
-                placeholder="Diárias extras"
-                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
-              />
-
-              <input
-                name="data_saida"
-                type="datetime-local"
-                value={form.data_saida}
-                onChange={handleChange}
-                required
-                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
-              />
-
-              <input
-                name="data_retorno"
-                type="datetime-local"
-                value={form.data_retorno}
-                onChange={handleChange}
-                required
-                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
-              />
-
-              <select
-                name="quantidade_motoristas"
-                value={form.quantidade_motoristas}
-                onChange={handleChange}
-                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
-              >
-                <option value="1">1 Motorista</option>
-                <option value="2">2 Motoristas</option>
-              </select>
-
-              <select
-                name="despesa_motorista"
-                value={form.despesa_motorista}
-                onChange={handleChange}
-                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
-              >
-                <option value="Cliente">Despesa motorista: Cliente</option>
-                <option value="Empresa">Despesa motorista: Empresa</option>
-              </select>
-
-              {form.despesa_motorista === "Empresa" && (
-                <input
-                  name="valor_despesa_motorista"
-                  type="number"
-                  value={form.valor_despesa_motorista}
-                  onChange={handleChange}
-                  placeholder="Valor da despesa do motorista"
-                  className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
-                />
-              )}
-
-              <select
-                name="forma_pagamento"
-                value={form.forma_pagamento}
-                onChange={handleChange}
-                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
-              >
-                <option>Pix</option>
-                <option>Dinheiro</option>
-                <option>Faturado</option>
-              </select>
-
-              <input
-                name="valor_pago"
-                type="number"
-                value={form.valor_pago}
-                onChange={handleChange}
-                placeholder="Valor de entrada / sinal"
-                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={salvando}
-              className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-medium"
-            >
-              {salvando ? "Salvando..." : "Salvar reserva"}
-            </button>
-          </section>
-
-          <aside className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 h-fit shadow-sm min-w-0">
-            <h2 className="text-base sm:text-lg font-semibold text-slate-800">
-              Resultado
-            </h2>
-
-            <p className="text-xs sm:text-sm text-slate-500 mt-2">
-              Valor estimado da reserva
-            </p>
-
-            <div className="mt-5 sm:mt-6 text-3xl sm:text-4xl font-bold text-indigo-700 break-words">
-              {form.tipo_viagem === "Citytour"
-                ? formatarMoeda(valorTotal)
-                : valorKm !== null && valorKm !== undefined
-                ? formatarMoeda(valorTotal)
-                : "Em aberto"}
-            </div>
-
-            <div className="mt-5 sm:mt-6 border-t border-slate-100 pt-4 text-xs text-slate-500 space-y-2">
-              <p>
-                Tipo de viagem: <b>{form.tipo_viagem}</b>
-              </p>
-
-              {form.tipo_viagem === "Citytour" && (
+              <div className="mt-5 border-t border-slate-100 pt-4 text-xs text-slate-500 space-y-2">
                 <p>
-                  Período:{" "}
+                  Tipo de viagem: <b>{form.tipo_viagem}</b>
+                </p>
+
+                {form.tipo_viagem === "Citytour" && (
+                  <p>
+                    Período:{" "}
+                    <b>
+                      {form.periodo_citytour} - {formatarMoeda(valorCitytour)}
+                    </b>
+                  </p>
+                )}
+
+                <p>
+                  KM total: <b>{form.km_total || 0} km</b>
+                </p>
+
+                <p>
+                  Tipo de ônibus:{" "}
+                  <b>{form.tipo_onibus || "Não selecionado"}</b>
+                </p>
+
+                <p>
+                  Valor por KM:{" "}
                   <b>
-                    {form.periodo_citytour} - {formatarMoeda(valorCitytour)}
+                    {valorKm !== null && valorKm !== undefined
+                      ? formatarMoeda(valorKm)
+                      : "Em aberto"}
                   </b>
                 </p>
-              )}
 
-              <p>
-                KM total: <b>{form.km_total || 0} km</b>
-              </p>
+                <p>
+                  Diárias extras: <b>{form.dias_parados || 0}</b>
+                </p>
 
-              <p>
-                Tipo de ônibus:{" "}
-                <b>{form.tipo_onibus || "Não selecionado"}</b>
-              </p>
+                <p>
+                  Nº de carros: <b>{numeroCarros}</b>
+                </p>
 
-              <p>
-                Valor por KM:{" "}
-                <b>
-                  {valorKm !== null && valorKm !== undefined
-                    ? formatarMoeda(valorKm)
-                    : "Em aberto"}
-                </b>
-              </p>
+                <p>
+                  Despesa motorista: <b>{form.despesa_motorista}</b>
+                </p>
+              </div>
+            </aside>
 
-              <p>
-                Diárias extras: <b>{form.dias_parados || 0}</b>
-              </p>
+            <section className="order-2 lg:order-1 lg:col-span-2 space-y-4 sm:space-y-5">
+              <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm">
+                <div className="mb-4">
+                  <h2 className="text-base sm:text-lg font-semibold text-slate-800">
+                    Cliente e tipo da viagem
+                  </h2>
 
-              <p>
-                Nº de carros: <b>{numeroCarros}</b>
-              </p>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                    Selecione o cliente e defina o modelo da reserva.
+                  </p>
+                </div>
 
-              <p>
-                Despesa motorista: <b>{form.despesa_motorista}</b>
-              </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <label className={labelClass}>Cliente</label>
 
-              <p>
-                Valor pago / sinal: <b>{formatarMoeda(valorPago)}</b>
-              </p>
+                    <select
+                      name="cliente_id"
+                      value={form.cliente_id}
+                      onChange={handleChange}
+                      required
+                      className={inputClass}
+                    >
+                      <option value="">Selecione o cliente</option>
 
-              <p>
-                Valor restante: <b>{formatarMoeda(valorRestante)}</b>
-              </p>
+                      {clientes.map((cliente) => (
+                        <option key={cliente.id} value={cliente.id}>
+                          {cliente.nome} - {cliente.cpf_cnpj}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-              <p>
-                Status pagamento: <b>{statusPagamento}</b>
-              </p>
-            </div>
-          </aside>
-        </form>
+                  <div>
+                    <label className={labelClass}>Tipo de viagem</label>
+
+                    <select
+                      name="tipo_viagem"
+                      value={form.tipo_viagem}
+                      onChange={handleChange}
+                      className={inputClass}
+                    >
+                      <option>Citytour</option>
+                      <option>Turismo</option>
+                    </select>
+                  </div>
+
+                  {form.tipo_viagem === "Citytour" && (
+                    <div>
+                      <label className={labelClass}>Período do Citytour</label>
+
+                      <select
+                        name="periodo_citytour"
+                        value={form.periodo_citytour}
+                        onChange={handleChange}
+                        className={inputClass}
+                      >
+                        <option value="Integral">
+                          Integral - R$ 2.000,00
+                        </option>
+                        <option value="Meio Período">
+                          Meio Período - R$ 1.800,00
+                        </option>
+                      </select>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className={labelClass}>Nº de carros</label>
+
+                    <input
+                      name="numero_carros"
+                      type="number"
+                      min="1"
+                      value={form.numero_carros}
+                      onChange={handleChange}
+                      required
+                      className={inputClass}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>Tipo de ônibus</label>
+
+                    <select
+                      name="tipo_onibus"
+                      value={form.tipo_onibus}
+                      onChange={handleChange}
+                      required
+                      className={inputClass}
+                    >
+                      <option value="">Selecione o tipo de ônibus</option>
+
+                      {tiposOnibus.map((item) => (
+                        <option key={item.nome} value={item.nome}>
+                          {item.nome}
+                          {item.valorKm
+                            ? ` - ${formatarMoeda(item.valorKm)} por KM`
+                            : " - Valor em aberto"}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm">
+                <div className="mb-4">
+                  <h2 className="text-base sm:text-lg font-semibold text-slate-800">
+                    Roteiro e datas
+                  </h2>
+
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                    Informe origem, destino, quilometragem e período da viagem.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelClass}>Origem</label>
+
+                    <input
+                      name="origem"
+                      value={form.origem}
+                      onChange={handleChange}
+                      required
+                      placeholder="Origem"
+                      className={inputClass}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>Destino</label>
+
+                    <input
+                      name="destino"
+                      value={form.destino}
+                      onChange={handleChange}
+                      required
+                      placeholder="Destino"
+                      className={inputClass}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>KM total</label>
+
+                    <input
+                      name="km_total"
+                      type="number"
+                      value={form.km_total}
+                      onChange={handleChange}
+                      required
+                      placeholder="Km Total"
+                      className={inputClass}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>Diárias extras</label>
+
+                    <input
+                      name="dias_parados"
+                      type="number"
+                      value={form.dias_parados}
+                      onChange={handleChange}
+                      placeholder="Diárias extras"
+                      className={inputClass}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>Data de saída</label>
+
+                    <input
+                      name="data_saida"
+                      type="datetime-local"
+                      value={form.data_saida}
+                      onChange={handleChange}
+                      required
+                      className={inputClass}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>Data de retorno</label>
+
+                    <input
+                      name="data_retorno"
+                      type="datetime-local"
+                      value={form.data_retorno}
+                      onChange={handleChange}
+                      required
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm">
+                <div className="mb-4">
+                  <h2 className="text-base sm:text-lg font-semibold text-slate-800">
+                    Motorista e pagamento
+                  </h2>
+
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                    Configure despesas, forma de pagamento e valor de entrada.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelClass}>Quantidade de motoristas</label>
+
+                    <select
+                      name="quantidade_motoristas"
+                      value={form.quantidade_motoristas}
+                      onChange={handleChange}
+                      className={inputClass}
+                    >
+                      <option value="1">1 Motorista</option>
+                      <option value="2">2 Motoristas</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>Despesa do motorista</label>
+
+                    <select
+                      name="despesa_motorista"
+                      value={form.despesa_motorista}
+                      onChange={handleChange}
+                      className={inputClass}
+                    >
+                      <option value="Cliente">Cliente</option>
+                      <option value="Empresa">Empresa</option>
+                    </select>
+                  </div>
+
+                  {form.despesa_motorista === "Empresa" && (
+                    <div>
+                      <label className={labelClass}>
+                        Valor da despesa do motorista
+                      </label>
+
+                      <input
+                        name="valor_despesa_motorista"
+                        type="number"
+                        value={form.valor_despesa_motorista}
+                        onChange={handleChange}
+                        placeholder="Valor da despesa"
+                        className={inputClass}
+                      />
+                    </div>
+                  )}
+
+                  <div>
+                    <label className={labelClass}>Forma de pagamento</label>
+
+                    <select
+                      name="forma_pagamento"
+                      value={form.forma_pagamento}
+                      onChange={handleChange}
+                      className={inputClass}
+                    >
+                      <option>Pix</option>
+                      <option>Dinheiro</option>
+                      <option>Faturado</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>Valor de entrada / sinal</label>
+
+                    <input
+                      name="valor_pago"
+                      type="number"
+                      value={form.valor_pago}
+                      onChange={handleChange}
+                      placeholder="Valor de entrada / sinal"
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-5">
+                  <button
+                    type="button"
+                    onClick={limparFormulario}
+                    className="w-full sm:w-auto px-4 py-2.5 rounded-lg border border-slate-300 text-slate-600 text-sm font-medium hover:bg-slate-50"
+                  >
+                    Limpar
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={salvando}
+                    className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-medium shadow-sm"
+                  >
+                    {salvando ? "Salvando..." : "Salvar reserva"}
+                  </button>
+                </div>
+              </div>
+            </section>
+          </form>
+        </div>
       </div>
     </>
   )
