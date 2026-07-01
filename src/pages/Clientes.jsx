@@ -38,7 +38,9 @@ export default function Clientes() {
       .select("*")
       .order("created_at", { ascending: false })
 
-    if (!error) setClientes(data || [])
+    if (!error) {
+      setClientes(data || [])
+    }
   }
 
   function handleChange(e) {
@@ -119,16 +121,11 @@ export default function Clientes() {
   }
 
   async function excluirCliente(id) {
-    const confirmar = window.confirm(
-      "Deseja realmente excluir este cliente?"
-    )
+    const confirmar = window.confirm("Deseja realmente excluir este cliente?")
 
     if (!confirmar) return
 
-    const { error } = await supabase
-      .from("clientes")
-      .delete()
-      .eq("id", id)
+    const { error } = await supabase.from("clientes").delete().eq("id", id)
 
     if (error) {
       console.error(error)
@@ -143,62 +140,60 @@ export default function Clientes() {
     <>
       <Sidebar aberto={menuAberto} onClose={() => setMenuAberto(false)} />
 
-      {menuAberto && (
-        <div
-          onClick={() => setMenuAberto(false)}
-          className="fixed inset-0 bg-black/40 z-40"
-        />
-      )}
-
-      <div className="min-h-screen bg-slate-100 p-4 md:p-6">
-        <header className="flex items-center gap-4 mb-6">
+      <div className="min-h-screen bg-slate-100 px-3 py-4 sm:px-4 md:p-6">
+        <header className="flex items-start sm:items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
           <button
+            type="button"
             onClick={() => setMenuAberto(true)}
-            className="text-slate-700 text-2xl hover:text-indigo-700"
+            className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-700 text-2xl shadow-sm hover:text-indigo-700"
+            aria-label="Abrir menu"
           >
             ☰
           </button>
 
-          <div>
-            <h1 className="text-2xl font-semibold text-slate-800">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-semibold text-slate-800">
               Clientes
             </h1>
 
-            <p className="text-sm text-slate-500">
+            <p className="text-xs sm:text-sm text-slate-500">
               Cadastro e gestão dos clientes
             </p>
           </div>
         </header>
 
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-5 sm:mb-6">
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm">
             <p className="text-sm text-slate-500">Total de clientes</p>
+
             <h2 className="text-2xl font-semibold text-slate-800 mt-2">
               {resumo.total}
             </h2>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm">
             <p className="text-sm text-slate-500">Pessoa Física</p>
+
             <h2 className="text-2xl font-semibold text-green-700 mt-2">
               {resumo.pessoaFisica}
             </h2>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm sm:col-span-2 lg:col-span-1">
             <p className="text-sm text-slate-500">Pessoa Jurídica</p>
+
             <h2 className="text-2xl font-semibold text-indigo-700 mt-2">
               {resumo.pessoaJuridica}
             </h2>
           </div>
         </section>
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 sm:gap-6">
           <form
             onSubmit={salvarCliente}
-            className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4 h-fit shadow-sm"
+            className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 space-y-4 h-fit shadow-sm"
           >
-            <h2 className="text-lg font-semibold text-slate-800">
+            <h2 className="text-base sm:text-lg font-semibold text-slate-800">
               Cadastrar cliente
             </h2>
 
@@ -208,7 +203,7 @@ export default function Clientes() {
               onChange={handleChange}
               placeholder="Nome ou Razão Social"
               required
-              className="w-full rounded-lg border border-slate-300 px-4 py-2"
+              className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
             />
 
             <input
@@ -222,7 +217,7 @@ export default function Clientes() {
               }
               placeholder="CPF ou CNPJ"
               required
-              className="w-full rounded-lg border border-slate-300 px-4 py-2"
+              className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 gap-4">
@@ -237,7 +232,7 @@ export default function Clientes() {
                 }
                 placeholder="Telefone"
                 required
-                className="w-full rounded-lg border border-slate-300 px-4 py-2"
+                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
               />
 
               <input
@@ -246,7 +241,7 @@ export default function Clientes() {
                 value={form.email}
                 onChange={handleChange}
                 placeholder="E-mail"
-                className="w-full rounded-lg border border-slate-300 px-4 py-2"
+                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
               />
             </div>
 
@@ -256,14 +251,14 @@ export default function Clientes() {
                 value={form.cep}
                 onChange={handleChange}
                 placeholder="CEP"
-                className="w-full rounded-lg border border-slate-300 px-4 py-2"
+                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
               />
 
               <select
                 name="uf"
                 value={form.uf}
                 onChange={handleChange}
-                className="w-full rounded-lg border border-slate-300 px-4 py-2"
+                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
               >
                 <option value="">UF</option>
                 <option value="AC">AC</option>
@@ -301,7 +296,7 @@ export default function Clientes() {
               value={form.cidade}
               onChange={handleChange}
               placeholder="Cidade"
-              className="w-full rounded-lg border border-slate-300 px-4 py-2"
+              className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
             />
 
             <input
@@ -309,7 +304,7 @@ export default function Clientes() {
               value={form.bairro}
               onChange={handleChange}
               placeholder="Bairro"
-              className="w-full rounded-lg border border-slate-300 px-4 py-2"
+              className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
             />
 
             <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-1 gap-4">
@@ -319,7 +314,7 @@ export default function Clientes() {
                 onChange={handleChange}
                 placeholder="Endereço / Rua"
                 required
-                className="md:col-span-2 xl:col-span-1 w-full rounded-lg border border-slate-300 px-4 py-2"
+                className="md:col-span-2 xl:col-span-1 w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
               />
 
               <input
@@ -327,7 +322,7 @@ export default function Clientes() {
                 value={form.numero}
                 onChange={handleChange}
                 placeholder="Número"
-                className="w-full rounded-lg border border-slate-300 px-4 py-2"
+                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
               />
             </div>
 
@@ -336,7 +331,7 @@ export default function Clientes() {
               value={form.complemento}
               onChange={handleChange}
               placeholder="Complemento"
-              className="w-full rounded-lg border border-slate-300 px-4 py-2"
+              className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
             />
 
             <input
@@ -344,28 +339,29 @@ export default function Clientes() {
               value={form.inscricao_estadual}
               onChange={handleChange}
               placeholder="Inscrição Estadual"
-              className="w-full rounded-lg border border-slate-300 px-4 py-2"
+              className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
             />
 
             <select
               name="tipo_cliente"
               value={form.tipo_cliente}
               onChange={handleChange}
-              className="w-full rounded-lg border border-slate-300 px-4 py-2"
+              className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
             >
               <option>Pessoa Física</option>
               <option>Pessoa Jurídica</option>
             </select>
 
             <button
+              type="submit"
               disabled={loading}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed text-white py-2.5 rounded-lg text-sm font-medium"
             >
               {loading ? "Salvando..." : "Salvar cliente"}
             </button>
           </form>
 
-          <section className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm min-w-0">
             <div className="flex flex-col gap-3 mb-4">
               <div>
                 <h2 className="text-base font-semibold text-slate-800">
@@ -381,7 +377,7 @@ export default function Clientes() {
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
                 placeholder="🔍 Pesquisar cliente..."
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"
               />
             </div>
 
@@ -394,12 +390,12 @@ export default function Clientes() {
                 {clientesFiltrados.map((cliente) => (
                   <div
                     key={cliente.id}
-                    className="border border-slate-200 rounded-lg px-3 py-2 hover:bg-slate-50 transition"
+                    className="border border-slate-200 rounded-xl px-3 py-3 hover:bg-slate-50 transition"
                   >
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                       <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-base">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-base shrink-0">
                             {cliente.tipo_cliente === "Pessoa Jurídica"
                               ? "🏢"
                               : "👤"}
@@ -410,14 +406,14 @@ export default function Clientes() {
                           </p>
                         </div>
 
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-slate-500 break-words mt-0.5">
                           {cliente.cpf_cnpj || "CPF/CNPJ não informado"}
                         </p>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 md:flex md:flex-wrap md:items-center gap-2">
                         <span
-                          className={`px-2 py-1 text-[11px] rounded-full font-medium ${
+                          className={`text-center px-2 py-1 text-[11px] rounded-full font-medium ${
                             cliente.tipo_cliente === "Pessoa Jurídica"
                               ? "bg-indigo-100 text-indigo-700"
                               : "bg-green-100 text-green-700"
@@ -427,15 +423,17 @@ export default function Clientes() {
                         </span>
 
                         <button
+                          type="button"
                           onClick={() => navigate(`/clientes/${cliente.id}`)}
-                          className="px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-700 text-xs hover:bg-indigo-100"
+                          className="px-2.5 py-1.5 rounded-md bg-indigo-50 text-indigo-700 text-xs hover:bg-indigo-100"
                         >
                           Detalhes
                         </button>
 
                         <button
+                          type="button"
                           onClick={() => excluirCliente(cliente.id)}
-                          className="px-2.5 py-1 rounded-md bg-red-50 text-red-700 text-xs hover:bg-red-100"
+                          className="px-2.5 py-1.5 rounded-md bg-red-50 text-red-700 text-xs hover:bg-red-100"
                         >
                           Excluir
                         </button>

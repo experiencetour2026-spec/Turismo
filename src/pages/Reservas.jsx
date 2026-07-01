@@ -71,7 +71,6 @@ export default function Reservas() {
   )
 
   const valorKm = onibusSelecionado?.valorKm
-
   const numeroCarros = Number(form.numero_carros || 1)
 
   const valorCitytour =
@@ -102,21 +101,21 @@ export default function Reservas() {
       : 0
 
   const valorPago = Number(form.valor_pago || 0)
-
   const valorRestante = Math.max(valorTotal - valorPago, 0)
 
   const statusPagamento =
-    valorPago > 0
-      ? valorRestante === 0
-        ? "Quitado"
-        : "Sinal pago"
-      : "Reservada"
+    valorPago > 0 ? (valorRestante === 0 ? "Quitado" : "Sinal pago") : "Reservada"
 
   async function salvarReserva(e) {
     e.preventDefault()
 
-    if (form.tipo_viagem === "Turismo" && (valorKm === null || valorKm === undefined)) {
-      alert("Este tipo de ônibus está com valor em aberto. Defina o valor antes de salvar.")
+    if (
+      form.tipo_viagem === "Turismo" &&
+      (valorKm === null || valorKm === undefined)
+    ) {
+      alert(
+        "Este tipo de ônibus está com valor em aberto. Defina o valor antes de salvar."
+      )
       return
     }
 
@@ -211,28 +210,23 @@ export default function Reservas() {
     <>
       <Sidebar aberto={menuAberto} onClose={() => setMenuAberto(false)} />
 
-      {menuAberto && (
-        <div
-          onClick={() => setMenuAberto(false)}
-          className="fixed inset-0 bg-black/40 z-40"
-        />
-      )}
-
-      <div className="min-h-screen bg-slate-100 p-6">
-        <header className="flex items-center gap-4 mb-8">
+      <div className="min-h-screen bg-slate-100 px-3 py-4 sm:px-4 md:p-6">
+        <header className="flex items-start sm:items-center gap-3 sm:gap-4 mb-5 sm:mb-8">
           <button
+            type="button"
             onClick={() => setMenuAberto(true)}
-            className="text-slate-700 text-2xl hover:text-indigo-700"
+            className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-700 text-2xl shadow-sm hover:text-indigo-700"
+            aria-label="Abrir menu"
           >
             ☰
           </button>
 
-          <div>
-            <h1 className="text-2xl font-semibold text-slate-800">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-semibold text-slate-800">
               Reservas de Viagens
             </h1>
 
-            <p className="text-sm text-slate-500">
+            <p className="text-xs sm:text-sm text-slate-500">
               Cadastro, orçamento e reserva vinculada ao cliente
             </p>
           </div>
@@ -240,19 +234,25 @@ export default function Reservas() {
 
         <form
           onSubmit={salvarReserva}
-          className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+          className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6"
         >
-          <section className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-slate-800">
-              Dados da reserva
-            </h2>
+          <section className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 space-y-4 shadow-sm min-w-0">
+            <div>
+              <h2 className="text-base sm:text-lg font-semibold text-slate-800">
+                Dados da reserva
+              </h2>
+
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                Preencha as informações para gerar o orçamento da viagem.
+              </p>
+            </div>
 
             <select
               name="cliente_id"
               value={form.cliente_id}
               onChange={handleChange}
               required
-              className="w-full rounded-lg border border-slate-300 px-4 py-2"
+              className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
             >
               <option value="">Selecione o cliente</option>
 
@@ -268,7 +268,7 @@ export default function Reservas() {
                 name="tipo_viagem"
                 value={form.tipo_viagem}
                 onChange={handleChange}
-                className="rounded-lg border border-slate-300 px-4 py-2"
+                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
               >
                 <option>Citytour</option>
                 <option>Turismo</option>
@@ -279,7 +279,7 @@ export default function Reservas() {
                   name="periodo_citytour"
                   value={form.periodo_citytour}
                   onChange={handleChange}
-                  className="rounded-lg border border-slate-300 px-4 py-2"
+                  className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
                 >
                   <option value="Integral">
                     Período Integral - R$ 2.000,00
@@ -298,7 +298,7 @@ export default function Reservas() {
                 onChange={handleChange}
                 placeholder="Nº de Carros"
                 required
-                className="rounded-lg border border-slate-300 px-4 py-2"
+                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
               />
 
               <input
@@ -307,7 +307,7 @@ export default function Reservas() {
                 onChange={handleChange}
                 placeholder="Origem"
                 required
-                className="rounded-lg border border-slate-300 px-4 py-2"
+                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
               />
 
               <input
@@ -316,7 +316,7 @@ export default function Reservas() {
                 onChange={handleChange}
                 placeholder="Destino"
                 required
-                className="rounded-lg border border-slate-300 px-4 py-2"
+                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
               />
 
               <input
@@ -326,7 +326,7 @@ export default function Reservas() {
                 onChange={handleChange}
                 placeholder="Km Total"
                 required
-                className="rounded-lg border border-slate-300 px-4 py-2"
+                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
               />
 
               <select
@@ -334,7 +334,7 @@ export default function Reservas() {
                 value={form.tipo_onibus}
                 onChange={handleChange}
                 required
-                className="rounded-lg border border-slate-300 px-4 py-2"
+                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
               >
                 <option value="">Selecione o tipo de ônibus</option>
 
@@ -354,7 +354,7 @@ export default function Reservas() {
                 value={form.dias_parados}
                 onChange={handleChange}
                 placeholder="Diárias extras"
-                className="rounded-lg border border-slate-300 px-4 py-2"
+                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
               />
 
               <input
@@ -363,7 +363,7 @@ export default function Reservas() {
                 value={form.data_saida}
                 onChange={handleChange}
                 required
-                className="rounded-lg border border-slate-300 px-4 py-2"
+                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
               />
 
               <input
@@ -372,14 +372,14 @@ export default function Reservas() {
                 value={form.data_retorno}
                 onChange={handleChange}
                 required
-                className="rounded-lg border border-slate-300 px-4 py-2"
+                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
               />
 
               <select
                 name="quantidade_motoristas"
                 value={form.quantidade_motoristas}
                 onChange={handleChange}
-                className="rounded-lg border border-slate-300 px-4 py-2"
+                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
               >
                 <option value="1">1 Motorista</option>
                 <option value="2">2 Motoristas</option>
@@ -389,7 +389,7 @@ export default function Reservas() {
                 name="despesa_motorista"
                 value={form.despesa_motorista}
                 onChange={handleChange}
-                className="rounded-lg border border-slate-300 px-4 py-2"
+                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
               >
                 <option value="Cliente">Despesa motorista: Cliente</option>
                 <option value="Empresa">Despesa motorista: Empresa</option>
@@ -402,7 +402,7 @@ export default function Reservas() {
                   value={form.valor_despesa_motorista}
                   onChange={handleChange}
                   placeholder="Valor da despesa do motorista"
-                  className="rounded-lg border border-slate-300 px-4 py-2"
+                  className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
                 />
               )}
 
@@ -410,7 +410,7 @@ export default function Reservas() {
                 name="forma_pagamento"
                 value={form.forma_pagamento}
                 onChange={handleChange}
-                className="rounded-lg border border-slate-300 px-4 py-2"
+                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
               >
                 <option>Pix</option>
                 <option>Dinheiro</option>
@@ -423,28 +423,29 @@ export default function Reservas() {
                 value={form.valor_pago}
                 onChange={handleChange}
                 placeholder="Valor de entrada / sinal"
-                className="rounded-lg border border-slate-300 px-4 py-2"
+                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
               />
             </div>
 
             <button
+              type="submit"
               disabled={salvando}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg"
+              className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-medium"
             >
               {salvando ? "Salvando..." : "Salvar reserva"}
             </button>
           </section>
 
-          <aside className="bg-white rounded-2xl border border-slate-200 p-6 h-fit">
-            <h2 className="text-lg font-semibold text-slate-800">
+          <aside className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 h-fit shadow-sm min-w-0">
+            <h2 className="text-base sm:text-lg font-semibold text-slate-800">
               Resultado
             </h2>
 
-            <p className="text-sm text-slate-500 mt-2">
+            <p className="text-xs sm:text-sm text-slate-500 mt-2">
               Valor estimado da reserva
             </p>
 
-            <div className="mt-6 text-4xl font-bold text-indigo-700">
+            <div className="mt-5 sm:mt-6 text-3xl sm:text-4xl font-bold text-indigo-700 break-words">
               {form.tipo_viagem === "Citytour"
                 ? formatarMoeda(valorTotal)
                 : valorKm !== null && valorKm !== undefined
@@ -452,8 +453,10 @@ export default function Reservas() {
                 : "Em aberto"}
             </div>
 
-            <div className="mt-6 border-t border-slate-100 pt-4 text-xs text-slate-500 space-y-1">
-              <p>Tipo de viagem: <b>{form.tipo_viagem}</b></p>
+            <div className="mt-5 sm:mt-6 border-t border-slate-100 pt-4 text-xs text-slate-500 space-y-2">
+              <p>
+                Tipo de viagem: <b>{form.tipo_viagem}</b>
+              </p>
 
               {form.tipo_viagem === "Citytour" && (
                 <p>
@@ -464,8 +467,14 @@ export default function Reservas() {
                 </p>
               )}
 
-              <p>KM total: <b>{form.km_total || 0} km</b></p>
-              <p>Tipo de ônibus: <b>{form.tipo_onibus || "Não selecionado"}</b></p>
+              <p>
+                KM total: <b>{form.km_total || 0} km</b>
+              </p>
+
+              <p>
+                Tipo de ônibus:{" "}
+                <b>{form.tipo_onibus || "Não selecionado"}</b>
+              </p>
 
               <p>
                 Valor por KM:{" "}
@@ -476,12 +485,29 @@ export default function Reservas() {
                 </b>
               </p>
 
-              <p>Diárias extras: <b>{form.dias_parados || 0}</b></p>
-              <p>Nº de carros: <b>{numeroCarros}</b></p>
-              <p>Despesa motorista: <b>{form.despesa_motorista}</b></p>
-              <p>Valor pago / sinal: <b>{formatarMoeda(valorPago)}</b></p>
-              <p>Valor restante: <b>{formatarMoeda(valorRestante)}</b></p>
-              <p>Status pagamento: <b>{statusPagamento}</b></p>
+              <p>
+                Diárias extras: <b>{form.dias_parados || 0}</b>
+              </p>
+
+              <p>
+                Nº de carros: <b>{numeroCarros}</b>
+              </p>
+
+              <p>
+                Despesa motorista: <b>{form.despesa_motorista}</b>
+              </p>
+
+              <p>
+                Valor pago / sinal: <b>{formatarMoeda(valorPago)}</b>
+              </p>
+
+              <p>
+                Valor restante: <b>{formatarMoeda(valorRestante)}</b>
+              </p>
+
+              <p>
+                Status pagamento: <b>{statusPagamento}</b>
+              </p>
             </div>
           </aside>
         </form>
