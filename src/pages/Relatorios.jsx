@@ -11,6 +11,9 @@ export default function Relatorios() {
   const [menuAberto, setMenuAberto] = useState(false)
   const [viagens, setViagens] = useState([])
   const [loading, setLoading] = useState(true)
+  const [busca, setBusca] = useState("")
+  const [limiteExibicao, setLimiteExibicao] = useState(5)
+  const [detalhesAbertos, setDetalhesAbertos] = useState({})
 
   const hoje = new Date()
 
@@ -24,6 +27,10 @@ export default function Relatorios() {
   useEffect(() => {
     carregarRelatorio()
   }, [])
+
+  useEffect(() => {
+    setLimiteExibicao(5)
+  }, [busca, mesSelecionado, tipoViagemFiltro, pagamentoFiltro])
 
   async function carregarRelatorio() {
     setLoading(true)
@@ -59,7 +66,12 @@ export default function Relatorios() {
 
   function formatarData(data) {
     if (!data) return "-"
-    return new Date(data).toLocaleDateString("pt-BR")
+
+    return new Date(data).toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    })
   }
 
   function dentroDoMes(data) {
@@ -72,6 +84,29 @@ export default function Relatorios() {
     ).padStart(2, "0")}`
 
     return anoMes === mesSelecionado
+  }
+
+  function alternarDetalhes(id) {
+    setDetalhesAbertos((atual) => ({
+      ...atual,
+      [id]: !atual[id],
+    }))
+  }
+
+  function statusClasse(status) {
+    if (status === "Quitado") {
+      return "bg-green-50 text-green-700 border border-green-100"
+    }
+
+    if (status === "Pagamento Parcial") {
+      return "bg-indigo-50 text-indigo-700 border border-indigo-100"
+    }
+
+    if (status === "Cancelada") {
+      return "bg-red-50 text-red-700 border border-red-100"
+    }
+
+    return "bg-slate-50 text-slate-600 border border-slate-200"
   }
 
   const viagensDoMes = useMemo(() => {
@@ -93,27 +128,50 @@ export default function Relatorios() {
     })
   }, [viagens, mesSelecionado, tipoViagemFiltro, pagamentoFiltro])
 
+  const viagensRelatorio = useMemo(() => {
+    const texto = busca.toLowerCase().trim()
+
+    if (!texto) return viagensDoMes
+
+    return viagensDoMes.filter((item) =>
+      `
+        ${item.clientes?.nome || ""}
+        ${item.clientes?.cpf_cnpj || ""}
+        ${item.tipo_viagem || ""}
+        ${item.origem || ""}
+        ${item.destino || ""}
+        ${item.forma_pagamento || ""}
+        ${item.status || ""}
+        ${item.status_viagem || ""}
+      `
+        .toLowerCase()
+        .includes(texto)
+    )
+  }, [viagensDoMes, busca])
+
+  const viagensExibidas = viagensRelatorio.slice(0, limiteExibicao)
+
   const resumo = useMemo(() => {
-    const receitaMensal = viagensDoMes.reduce(
+    const receitaMensal = viagensRelatorio.reduce(
       (total, item) => total + Number(item.valor_total || 0),
       0
     )
 
-    const totalRecebido = viagensDoMes.reduce(
+    const totalRecebido = viagensRelatorio.reduce(
       (total, item) => total + Number(item.valor_pago || 0),
       0
     )
 
-    const totalPendente = viagensDoMes.reduce(
+    const totalPendente = viagensRelatorio.reduce(
       (total, item) => total + Number(item.valor_restante || 0),
       0
     )
 
-    const totalFaturado = viagensDoMes
+    const totalFaturado = viagensRelatorio
       .filter((item) => item.forma_pagamento === "Faturado")
       .reduce((total, item) => total + Number(item.valor_total || 0), 0)
 
-    const viagensCanceladas = viagensDoMes.filter(
+    const viagensCanceladas = viagensRelatorio.filter(
       (item) => item.status_viagem === "Cancelada"
     ).length
 
@@ -122,386 +180,490 @@ export default function Relatorios() {
       totalRecebido,
       totalPendente,
       totalFaturado,
-      quantidadeViagens: viagensDoMes.length,
+      quantidadeViagens: viagensRelatorio.length,
       viagensCanceladas,
     }
-  }, [viagensDoMes])
+  }, [viagensRelatorio])
 
-function baixarPDF() {
-  const doc = new jsPDF({
-    orientation: "landscape",
-    unit: "mm",
-    format: "a4",
-  })
+  function baixarPDF() {
+    const doc = new jsPDF({
+      orientation: "landscape",
+      unit: "mm",
+      format: "a4",
+    })
 
-  doc.setFontSize(18)
-  doc.text("Relatório Mensal - Turismo", 14, 18)
+    doc.setFontSize(18)
+    doc.text("Relatório Mensal - Turismo", 14, 18)
 
-  doc.setFontSize(10)
+    doc.setFontSize(10)
 
-  const esquerda = 14
-  const direita = 150
+    const esquerda = 14
+    const direita = 150
 
-  doc.text(`Mês: ${mesSelecionado}`, esquerda, 30)
-  doc.text(`Tipo de viagem: ${tipoViagemFiltro}`, direita, 30)
+    doc.text(`Mês: ${mesSelecionado}`, esquerda, 30)
+    doc.text(`Tipo de viagem: ${tipoViagemFiltro}`, direita, 30)
 
-  doc.text(`Pagamento: ${pagamentoFiltro}`, esquerda, 38)
-  doc.text(
-    `Receita mensal: ${formatarMoeda(resumo.receitaMensal)}`,
-    direita,
-    38
-  )
+    doc.text(`Pagamento: ${pagamentoFiltro}`, esquerda, 38)
+    doc.text(
+      `Receita mensal: ${formatarMoeda(resumo.receitaMensal)}`,
+      direita,
+      38
+    )
 
-  doc.text(
-    `Total recebido: ${formatarMoeda(resumo.totalRecebido)}`,
-    esquerda,
-    46
-  )
+    doc.text(
+      `Total recebido: ${formatarMoeda(resumo.totalRecebido)}`,
+      esquerda,
+      46
+    )
 
-  doc.text(
-    `Total pendente: ${formatarMoeda(resumo.totalPendente)}`,
-    direita,
-    46
-  )
+    doc.text(
+      `Total pendente: ${formatarMoeda(resumo.totalPendente)}`,
+      direita,
+      46
+    )
 
-  doc.text(
-    `Total faturado: ${formatarMoeda(resumo.totalFaturado)}`,
-    esquerda,
-    54
-  )
+    doc.text(
+      `Total faturado: ${formatarMoeda(resumo.totalFaturado)}`,
+      esquerda,
+      54
+    )
 
-  doc.text(
-    `Viagens do mês: ${resumo.quantidadeViagens}`,
-    direita,
-    54
-  )
+    doc.text(`Viagens do mês: ${resumo.quantidadeViagens}`, direita, 54)
 
-  doc.text(
-    `Canceladas: ${resumo.viagensCanceladas}`,
-    esquerda,
-    62
-  )
+    doc.text(`Canceladas: ${resumo.viagensCanceladas}`, esquerda, 62)
 
-  autoTable(doc, {
-    startY: 72,
+    autoTable(doc, {
+      startY: 72,
 
-    head: [[
-      "Data",
-      "Cliente",
-      "Tipo",
-      "Origem",
-      "Destino",
-      "Pagamento",
-      "Faturado",
-      "Status",
-      "Valor Final",
-      "Recebido",
-      "Pendente"
-    ]],
+      head: [
+        [
+          "Data",
+          "Cliente",
+          "Tipo",
+          "Origem",
+          "Destino",
+          "Pagamento",
+          "Faturado",
+          "Status",
+          "Valor Final",
+          "Recebido",
+          "Pendente",
+        ],
+      ],
 
-    body: viagensDoMes.map((item) => [
-      formatarData(item.data_saida),
-      item.clientes?.nome || "Cliente não informado",
-      item.tipo_viagem || "-",
-      item.origem || "-",
-      item.destino || "-",
-      item.forma_pagamento || "-",
-      item.forma_pagamento === "Faturado" ? "Sim" : "Não",
-      item.status || item.status_viagem || "Reservada",
-      formatarMoeda(item.valor_total),
-      formatarMoeda(item.valor_pago),
-      formatarMoeda(item.valor_restante),
-    ]),
+      body: viagensRelatorio.map((item) => [
+        formatarData(item.data_saida),
+        item.clientes?.nome || "Cliente não informado",
+        item.tipo_viagem || "-",
+        item.origem || "-",
+        item.destino || "-",
+        item.forma_pagamento || "-",
+        item.forma_pagamento === "Faturado" ? "Sim" : "Não",
+        item.status || item.status_viagem || "Reservada",
+        formatarMoeda(item.valor_total),
+        formatarMoeda(item.valor_pago),
+        formatarMoeda(item.valor_restante),
+      ]),
 
-    styles: {
-      fontSize: 8,
-      cellPadding: 2,
-      overflow: "linebreak",
-      valign: "middle",
-    },
+      styles: {
+        fontSize: 8,
+        cellPadding: 2,
+        overflow: "linebreak",
+        valign: "middle",
+      },
 
-    headStyles: {
-      fillColor: [79, 70, 229],
-      textColor: 255,
-      fontStyle: "bold",
-      fontSize: 8,
-    },
+      headStyles: {
+        fillColor: [79, 70, 229],
+        textColor: 255,
+        fontStyle: "bold",
+        fontSize: 8,
+      },
 
-    columnStyles: {
-      0: { cellWidth: 18 }, // Data
-      1: { cellWidth: 55 }, // Cliente
-      2: { cellWidth: 18 }, // Tipo
-      3: { cellWidth: 30 }, // Origem
-      4: { cellWidth: 30 }, // Destino
-      5: { cellWidth: 24 }, // Pagamento
-      6: { cellWidth: 18 }, // Faturado
-      7: { cellWidth: 25 }, // Status
-      8: { cellWidth: 26 }, // Valor Final
-      9: { cellWidth: 24 }, // Recebido
-      10: { cellWidth: 26 }, // Pendente
-    },
+      columnStyles: {
+        0: { cellWidth: 18 },
+        1: { cellWidth: 55 },
+        2: { cellWidth: 18 },
+        3: { cellWidth: 30 },
+        4: { cellWidth: 30 },
+        5: { cellWidth: 24 },
+        6: { cellWidth: 18 },
+        7: { cellWidth: 25 },
+        8: { cellWidth: 26 },
+        9: { cellWidth: 24 },
+        10: { cellWidth: 26 },
+      },
 
-    margin: {
-      left: 8,
-      right: 8,
-    },
-  })
+      margin: {
+        left: 8,
+        right: 8,
+      },
+    })
 
-  doc.save(
-    `relatorio-${mesSelecionado}-${tipoViagemFiltro}-${pagamentoFiltro}.pdf`
-  )
-}
+    doc.save(
+      `relatorio-${mesSelecionado}-${tipoViagemFiltro}-${pagamentoFiltro}.pdf`
+    )
+  }
 
   return (
     <>
       <Sidebar aberto={menuAberto} onClose={() => setMenuAberto(false)} />
 
-      {menuAberto && (
-        <div
-          onClick={() => setMenuAberto(false)}
-          className="fixed inset-0 bg-black/40 z-40"
-        />
-      )}
+      <div className="min-h-screen bg-slate-100 px-3 py-4 sm:px-4 md:p-6">
+        <div className="mx-auto max-w-6xl">
+          <header className="mb-4 sm:mb-6">
+            <div className="flex items-start gap-3">
+              <button
+                type="button"
+                onClick={() => setMenuAberto(true)}
+                className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-700 text-2xl shadow-sm hover:text-indigo-700"
+                aria-label="Abrir menu"
+              >
+                ☰
+              </button>
 
-      <div className="min-h-screen bg-slate-100 p-6">
-        <header className="flex items-center justify-between mb-8 gap-4">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setMenuAberto(true)}
-              className="text-slate-700 text-2xl hover:text-indigo-700"
-            >
-              ☰
-            </button>
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-2xl font-semibold text-slate-800">
+                  Relatórios
+                </h1>
 
-            <div>
-              <h1 className="text-2xl font-semibold text-slate-800">
-                Relatórios
-              </h1>
+                <p className="text-xs sm:text-sm text-slate-500">
+                  Resumo financeiro e operacional das viagens
+                </p>
+              </div>
+            </div>
+          </header>
 
+          <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm mb-4 sm:mb-6">
+            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+              <div>
+                <h2 className="text-base sm:text-lg font-semibold text-slate-800">
+                  Filtros do relatório
+                </h2>
+
+                <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                  Selecione o período, tipo de viagem e forma de pagamento.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full lg:w-auto">
+                <input
+                  type="month"
+                  value={mesSelecionado}
+                  onChange={(e) => setMesSelecionado(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                />
+
+                <select
+                  value={tipoViagemFiltro}
+                  onChange={(e) => setTipoViagemFiltro(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                >
+                  <option value="Todos">Todos os tipos</option>
+                  <option value="Citytour">Citytour</option>
+                  <option value="Turismo">Turismo</option>
+                </select>
+
+                <select
+                  value={pagamentoFiltro}
+                  onChange={(e) => setPagamentoFiltro(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                >
+                  <option value="Todos">Todos os pagamentos</option>
+                  <option value="Faturado">Somente faturados</option>
+                  <option value="NaoFaturado">Não faturados</option>
+                </select>
+
+                <button
+                  type="button"
+                  onClick={baixarPDF}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm"
+                >
+                  Baixar PDF
+                </button>
+              </div>
+            </div>
+          </section>
+
+          {loading ? (
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm">
               <p className="text-sm text-slate-500">
-                Resumo financeiro e operacional das viagens
+                Carregando relatórios...
               </p>
             </div>
-          </div>
+          ) : (
+            <>
+              <section className="grid grid-cols-2 lg:grid-cols-6 gap-2 sm:gap-4 mb-4 sm:mb-6">
+                <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 p-3 sm:p-5 shadow-sm">
+                  <p className="text-[11px] sm:text-sm text-slate-500">
+                    Receita
+                  </p>
 
-          <div className="flex items-center gap-3 flex-wrap justify-end">
-            <input
-              type="month"
-              value={mesSelecionado}
-              onChange={(e) => setMesSelecionado(e.target.value)}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm"
-            />
-
-            <select
-              value={tipoViagemFiltro}
-              onChange={(e) => setTipoViagemFiltro(e.target.value)}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm"
-            >
-              <option value="Todos">Todos os tipos</option>
-              <option value="Citytour">Citytour</option>
-              <option value="Turismo">Turismo</option>
-            </select>
-
-            <select
-              value={pagamentoFiltro}
-              onChange={(e) => setPagamentoFiltro(e.target.value)}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm"
-            >
-              <option value="Todos">Todos os pagamentos</option>
-              <option value="Faturado">Somente faturados</option>
-              <option value="NaoFaturado">Não faturados</option>
-            </select>
-
-            <button
-              onClick={baixarPDF}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm"
-            >
-              Baixar PDF
-            </button>
-          </div>
-        </header>
-
-        {loading ? (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6">
-            <p className="text-sm text-slate-500">
-              Carregando relatórios...
-            </p>
-          </div>
-        ) : (
-          <>
-            <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4 mb-6">
-              <div className="bg-white rounded-2xl border border-slate-200 p-5">
-                <p className="text-sm text-slate-500">Receita mensal</p>
-                <h2 className="text-2xl font-semibold text-slate-800 mt-2">
-                  {formatarMoeda(resumo.receitaMensal)}
-                </h2>
-              </div>
-
-              <div className="bg-white rounded-2xl border border-slate-200 p-5">
-                <p className="text-sm text-slate-500">Total recebido</p>
-                <h2 className="text-2xl font-semibold text-green-700 mt-2">
-                  {formatarMoeda(resumo.totalRecebido)}
-                </h2>
-              </div>
-
-              <div className="bg-white rounded-2xl border border-slate-200 p-5">
-                <p className="text-sm text-slate-500">Total pendente</p>
-                <h2 className="text-2xl font-semibold text-red-700 mt-2">
-                  {formatarMoeda(resumo.totalPendente)}
-                </h2>
-              </div>
-
-              <div
-                onClick={() => setPagamentoFiltro("Faturado")}
-                className="bg-white rounded-2xl border border-slate-200 p-5 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition"
-              >
-                <p className="text-sm text-slate-500">Total faturado</p>
-
-                <h2 className="text-2xl font-semibold text-indigo-700 mt-2">
-                  {formatarMoeda(resumo.totalFaturado)}
-                </h2>
-
-                <p className="text-xs text-indigo-600 mt-2">
-                  Filtrar faturados →
-                </p>
-              </div>
-
-              <div className="bg-white rounded-2xl border border-slate-200 p-5">
-                <p className="text-sm text-slate-500">Viagens do mês</p>
-                <h2 className="text-2xl font-semibold text-slate-800 mt-2">
-                  {resumo.quantidadeViagens}
-                </h2>
-              </div>
-
-              <div className="bg-white rounded-2xl border border-slate-200 p-5">
-                <p className="text-sm text-slate-500">Canceladas</p>
-                <h2 className="text-2xl font-semibold text-slate-800 mt-2">
-                  {resumo.viagensCanceladas}
-                </h2>
-              </div>
-            </section>
-
-            <section className="bg-white rounded-2xl border border-slate-200 p-6">
-              <div className="flex items-center justify-between gap-4 mb-4">
-                <h2 className="text-lg font-semibold text-slate-800">
-                  Relatório discriminado
-                </h2>
-
-                <p className="text-sm text-slate-500">
-                  Tipo: <b>{tipoViagemFiltro}</b> | Pagamento:{" "}
-                  <b>{pagamentoFiltro}</b>
-                </p>
-              </div>
-
-              {viagensDoMes.length === 0 ? (
-                <p className="text-sm text-slate-500">
-                  Nenhuma viagem encontrada para este filtro.
-                </p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-slate-200 text-left text-slate-500">
-                        <th className="py-3 pr-4">Data</th>
-                        <th className="py-3 pr-4">Cliente</th>
-                        <th className="py-3 pr-4">Tipo de Viagem</th>
-                        <th className="py-3 pr-4">Origem</th>
-                        <th className="py-3 pr-4">Destino</th>
-                        <th className="py-3 pr-4">Pagamento</th>
-                        <th className="py-3 pr-4">Faturado</th>
-                        <th className="py-3 pr-4">Status</th>
-                        <th className="py-3 pr-4">Valor Final</th>
-                        <th className="py-3 pr-4">Recebido</th>
-                        <th className="py-3 pr-4">Pendente</th>
-                        <th className="py-3 pr-4">Ações</th>
-                      </tr>
-                    </thead>
-
-                    <tbody>
-                      {viagensDoMes.map((item) => (
-                        <tr
-                          key={item.id}
-                          className="border-b border-slate-100 hover:bg-slate-50"
-                        >
-                          <td className="py-3 pr-4 text-slate-600">
-                            {formatarData(item.data_saida)}
-                          </td>
-
-                          <td className="py-3 pr-4 font-medium text-slate-800">
-                            {item.clientes?.nome || "Cliente não informado"}
-                          </td>
-
-                          <td className="py-3 pr-4 text-slate-600">
-                            {item.tipo_viagem || "-"}
-                          </td>
-
-                          <td className="py-3 pr-4 text-slate-600">
-                            {item.origem}
-                          </td>
-
-                          <td className="py-3 pr-4 text-slate-600">
-                            {item.destino}
-                          </td>
-
-                          <td className="py-3 pr-4 text-slate-600">
-                            {item.forma_pagamento || "-"}
-                          </td>
-
-                          <td className="py-3 pr-4">
-                            {item.forma_pagamento === "Faturado" ? (
-                              <span className="px-2 py-1 rounded-full text-xs bg-indigo-100 text-indigo-700">
-                                Sim
-                              </span>
-                            ) : (
-                              <span className="px-2 py-1 rounded-full text-xs bg-slate-100 text-slate-500">
-                                Não
-                              </span>
-                            )}
-                          </td>
-
-                          <td className="py-3 pr-4 text-slate-600">
-                            {item.status || item.status_viagem || "Reservada"}
-                          </td>
-
-                          <td className="py-3 pr-4 font-medium text-slate-800">
-                            {formatarMoeda(item.valor_total)}
-                          </td>
-
-                          <td className="py-3 pr-4 font-medium text-green-700">
-                            {formatarMoeda(item.valor_pago)}
-                          </td>
-
-                          <td className="py-3 pr-4 font-medium text-red-700">
-                            {formatarMoeda(item.valor_restante)}
-                          </td>
-
-                          <td className="py-3 pr-4">
-                            {Number(item.valor_restante || 0) > 0 ? (
-                              <button
-                                onClick={() =>
-                                  navigate(
-                                    `/viagens/${item.id}?voltar=relatorios`
-                                  )
-                                }
-                                className="text-sm text-indigo-600 hover:underline"
-                              >
-                                Receber
-                              </button>
-                            ) : (
-                              <span className="text-xs text-slate-400">
-                                Quitado
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <h2 className="text-sm sm:text-xl font-semibold text-slate-800 mt-1 sm:mt-2 break-words">
+                    {formatarMoeda(resumo.receitaMensal)}
+                  </h2>
                 </div>
-              )}
-            </section>
-          </>
-        )}
+
+                <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 p-3 sm:p-5 shadow-sm">
+                  <p className="text-[11px] sm:text-sm text-slate-500">
+                    Recebido
+                  </p>
+
+                  <h2 className="text-sm sm:text-xl font-semibold text-green-700 mt-1 sm:mt-2 break-words">
+                    {formatarMoeda(resumo.totalRecebido)}
+                  </h2>
+                </div>
+
+                <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 p-3 sm:p-5 shadow-sm">
+                  <p className="text-[11px] sm:text-sm text-slate-500">
+                    Pendente
+                  </p>
+
+                  <h2 className="text-sm sm:text-xl font-semibold text-red-700 mt-1 sm:mt-2 break-words">
+                    {formatarMoeda(resumo.totalPendente)}
+                  </h2>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setPagamentoFiltro("Faturado")}
+                  className="text-left bg-white rounded-xl sm:rounded-2xl border border-slate-200 p-3 sm:p-5 shadow-sm hover:border-indigo-300 hover:bg-indigo-50 transition"
+                >
+                  <p className="text-[11px] sm:text-sm text-slate-500">
+                    Faturado
+                  </p>
+
+                  <h2 className="text-sm sm:text-xl font-semibold text-indigo-700 mt-1 sm:mt-2 break-words">
+                    {formatarMoeda(resumo.totalFaturado)}
+                  </h2>
+                </button>
+
+                <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 p-3 sm:p-5 shadow-sm">
+                  <p className="text-[11px] sm:text-sm text-slate-500">
+                    Viagens
+                  </p>
+
+                  <h2 className="text-xl sm:text-2xl font-semibold text-slate-800 mt-1 sm:mt-2">
+                    {resumo.quantidadeViagens}
+                  </h2>
+                </div>
+
+                <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 p-3 sm:p-5 shadow-sm">
+                  <p className="text-[11px] sm:text-sm text-slate-500">
+                    Canceladas
+                  </p>
+
+                  <h2 className="text-xl sm:text-2xl font-semibold text-slate-800 mt-1 sm:mt-2">
+                    {resumo.viagensCanceladas}
+                  </h2>
+                </div>
+              </section>
+
+              <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm mb-4 sm:mb-6">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                  <div>
+                    <h2 className="text-base sm:text-lg font-semibold text-slate-800">
+                      Relatório discriminado
+                    </h2>
+
+                    <p className="text-xs sm:text-sm text-slate-500">
+                      Tipo: <b>{tipoViagemFiltro}</b> | Pagamento:{" "}
+                      <b>{pagamentoFiltro}</b>
+                    </p>
+                  </div>
+
+                  <input
+                    value={busca}
+                    onChange={(e) => setBusca(e.target.value)}
+                    placeholder="🔍 Pesquisar por cliente, rota, status..."
+                    className="w-full lg:w-80 rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                  />
+                </div>
+              </section>
+
+              <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm">
+                {viagensRelatorio.length === 0 ? (
+                  <div className="py-8 text-center">
+                    <p className="text-sm font-medium text-slate-700">
+                      Nenhuma viagem encontrada para este filtro.
+                    </p>
+
+                    <p className="text-xs text-slate-500 mt-1">
+                      Altere o mês, o tipo de viagem ou a forma de pagamento.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-3">
+                      {viagensExibidas.map((item) => {
+                        const detalhesAberto = detalhesAbertos[item.id]
+                        const statusAtual =
+                          item.status || item.status_viagem || "Reservada"
+
+                        return (
+                          <article
+                            key={item.id}
+                            className="rounded-xl border border-slate-200 p-3 sm:p-4 hover:border-indigo-200 hover:bg-slate-50 transition"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <h3 className="text-sm font-semibold text-slate-800 leading-snug break-words">
+                                  {item.clientes?.nome ||
+                                    "Cliente não informado"}
+                                </h3>
+
+                                <p className="text-xs text-slate-500 mt-1 break-words">
+                                  {formatarData(item.data_saida)}
+                                </p>
+                              </div>
+
+                              <span
+                                className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium ${statusClasse(
+                                  statusAtual
+                                )}`}
+                              >
+                                {statusAtual}
+                              </span>
+                            </div>
+
+                            <div className="mt-3 rounded-xl bg-slate-50 border border-slate-100 p-3">
+                              <p className="text-[11px] text-slate-500">
+                                Rota
+                              </p>
+
+                              <p className="text-sm font-medium text-slate-800 mt-1 break-words">
+                                {item.origem || "-"} → {item.destino || "-"}
+                              </p>
+                            </div>
+
+                            <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                              <div className="rounded-lg border border-slate-100 p-2">
+                                <p className="text-slate-500">Valor final</p>
+
+                                <p className="text-indigo-700 font-semibold mt-1">
+                                  {formatarMoeda(item.valor_total)}
+                                </p>
+                              </div>
+
+                              <div className="rounded-lg border border-slate-100 p-2">
+                                <p className="text-slate-500">Recebido</p>
+
+                                <p className="text-green-700 font-semibold mt-1">
+                                  {formatarMoeda(item.valor_pago)}
+                                </p>
+                              </div>
+
+                              <div className="rounded-lg border border-slate-100 p-2">
+                                <p className="text-slate-500">Pendente</p>
+
+                                <p className="text-red-600 font-semibold mt-1">
+                                  {formatarMoeda(item.valor_restante)}
+                                </p>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => alternarDetalhes(item.id)}
+                              className="mt-3 w-full rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100"
+                            >
+                              {detalhesAberto
+                                ? "Ocultar dados"
+                                : "+ Ver dados do relatório"}
+                            </button>
+
+                            {detalhesAberto && (
+                              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                <div className="rounded-lg border border-slate-100 p-2">
+                                  <p className="text-slate-500">Tipo</p>
+
+                                  <p className="text-slate-800 font-medium mt-1">
+                                    {item.tipo_viagem || "-"}
+                                  </p>
+                                </div>
+
+                                <div className="rounded-lg border border-slate-100 p-2">
+                                  <p className="text-slate-500">Pagamento</p>
+
+                                  <p className="text-slate-800 font-medium mt-1">
+                                    {item.forma_pagamento || "-"}
+                                  </p>
+                                </div>
+
+                                <div className="rounded-lg border border-slate-100 p-2">
+                                  <p className="text-slate-500">Faturado</p>
+
+                                  <p
+                                    className={`font-medium mt-1 ${
+                                      item.forma_pagamento === "Faturado"
+                                        ? "text-indigo-700"
+                                        : "text-slate-700"
+                                    }`}
+                                  >
+                                    {item.forma_pagamento === "Faturado"
+                                      ? "Sim"
+                                      : "Não"}
+                                  </p>
+                                </div>
+
+                                <div className="rounded-lg border border-slate-100 p-2">
+                                  <p className="text-slate-500">Documento</p>
+
+                                  <p className="text-slate-800 font-medium mt-1 break-words">
+                                    {item.clientes?.cpf_cnpj ||
+                                      "Não informado"}
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="mt-4">
+                              {Number(item.valor_restante || 0) > 0 ? (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    navigate(
+                                      `/viagens/${item.id}?voltar=relatorios`
+                                    )
+                                  }
+                                  className="w-full px-3 py-2.5 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 text-xs font-medium hover:bg-indigo-100"
+                                >
+                                  Receber
+                                </button>
+                              ) : (
+                                <div className="w-full px-3 py-2.5 rounded-lg border border-green-100 bg-green-50 text-green-700 text-xs font-medium text-center">
+                                  Quitado
+                                </div>
+                              )}
+                            </div>
+                          </article>
+                        )
+                      })}
+                    </div>
+
+                    <div className="mt-5 border-t border-slate-100 pt-4">
+                      <p className="text-xs text-slate-500 text-center mb-3">
+                        Mostrando {viagensExibidas.length} de{" "}
+                        {viagensRelatorio.length} registro(s)
+                      </p>
+
+                      {limiteExibicao < viagensRelatorio.length && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setLimiteExibicao((atual) => atual + 5)
+                          }
+                          className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                        >
+                          Carregar mais registros
+                        </button>
+                      )}
+                    </div>
+                  </>
+                )}
+              </section>
+            </>
+          )}
+        </div>
       </div>
     </>
   )
