@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import Sidebar from "../components/Sidebar"
 import { supabase } from "../services/supabase"
@@ -9,6 +9,7 @@ export default function Viagens() {
   const [menuAberto, setMenuAberto] = useState(false)
   const [viagens, setViagens] = useState([])
   const [loading, setLoading] = useState(true)
+  const [busca, setBusca] = useState("")
 
   useEffect(() => {
     carregarViagens()
@@ -47,10 +48,7 @@ export default function Viagens() {
 
     if (!confirmar) return
 
-    const { error } = await supabase
-      .from("reservas")
-      .delete()
-      .eq("id", id)
+    const { error } = await supabase.from("reservas").delete().eq("id", id)
 
     if (error) {
       console.error(error)
@@ -70,169 +68,286 @@ export default function Viagens() {
 
   function formatarData(data) {
     if (!data) return "-"
-    return new Date(data).toLocaleString("pt-BR")
+
+    return new Date(data).toLocaleString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
   }
 
   function statusClasse(status) {
     if (status === "Cancelada") {
-      return "bg-red-100 text-red-700"
+      return "bg-red-50 text-red-700 border border-red-100"
     }
 
-    return "bg-green-100 text-green-700"
+    return "bg-green-50 text-green-700 border border-green-100"
   }
 
   function mostrarMotorista(viagem) {
     if (viagem.quantidade_motoristas === 2 && viagem.matricula_motorista_2) {
-      return `${viagem.matricula_motorista_1 || "-"} / ${viagem.matricula_motorista_2}`
+      return `${viagem.matricula_motorista_1 || "-"} / ${
+        viagem.matricula_motorista_2
+      }`
     }
 
     return viagem.matricula_motorista_1 || "-"
   }
 
+  const viagensFiltradas = useMemo(() => {
+    const texto = busca.toLowerCase().trim()
+
+    if (!texto) return viagens
+
+    return viagens.filter((viagem) =>
+      `
+        ${viagem.clientes?.nome || ""}
+        ${viagem.clientes?.cpf_cnpj || ""}
+        ${viagem.status_viagem || ""}
+        ${viagem.tipo_viagem || ""}
+        ${viagem.origem || ""}
+        ${viagem.destino || ""}
+        ${viagem.numero_carro || ""}
+        ${mostrarMotorista(viagem)}
+      `
+        .toLowerCase()
+        .includes(texto)
+    )
+  }, [viagens, busca])
+
+  const resumo = useMemo(() => {
+    const total = viagens.length
+
+    const confirmadas = viagens.filter(
+      (viagem) => (viagem.status_viagem || "Confirmada") === "Confirmada"
+    ).length
+
+    const canceladas = viagens.filter(
+      (viagem) => viagem.status_viagem === "Cancelada"
+    ).length
+
+    return {
+      total,
+      confirmadas,
+      canceladas,
+    }
+  }, [viagens])
+
   return (
     <>
       <Sidebar aberto={menuAberto} onClose={() => setMenuAberto(false)} />
 
-      {menuAberto && (
-        <div
-          onClick={() => setMenuAberto(false)}
-          className="fixed inset-0 bg-black/40 z-40"
-        />
-      )}
+      <div className="min-h-screen bg-slate-100 px-3 py-4 sm:px-4 md:p-6">
+        <div className="mx-auto max-w-6xl">
+          <header className="mb-4 sm:mb-6">
+            <div className="flex items-start gap-3">
+              <button
+                type="button"
+                onClick={() => setMenuAberto(true)}
+                className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-700 text-2xl shadow-sm hover:text-indigo-700"
+                aria-label="Abrir menu"
+              >
+                ☰
+              </button>
 
-      <div className="min-h-screen bg-slate-100 p-6">
-        <header className="flex items-center gap-4 mb-8">
-          <button
-            onClick={() => setMenuAberto(true)}
-            className="text-slate-700 text-2xl hover:text-indigo-700"
-          >
-            ☰
-          </button>
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-2xl font-semibold text-slate-800">
+                  Viagens
+                </h1>
 
-          <div>
-            <h1 className="text-2xl font-semibold text-slate-800">
-              Viagens
-            </h1>
-
-            <p className="text-sm text-slate-500">
-              Viagens atuais e futuras
-            </p>
-          </div>
-        </header>
-
-        <section className="bg-white rounded-2xl border border-slate-200 p-6">
-          <h2 className="text-lg font-semibold text-slate-800 mb-4">
-            Lista de viagens
-          </h2>
-
-          {loading ? (
-            <p className="text-sm text-slate-500">
-              Carregando viagens...
-            </p>
-          ) : viagens.length === 0 ? (
-            <p className="text-sm text-slate-500">
-              Nenhuma viagem atual ou futura cadastrada.
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200 text-left text-slate-500">
-                    <th className="py-3 pr-4">Cliente</th>
-                    <th className="py-3 pr-4">Status</th>
-                    <th className="py-3 pr-4">Tipo</th>
-                    <th className="py-3 pr-4">Origem</th>
-                    <th className="py-3 pr-4">Destino</th>
-                    <th className="py-3 pr-4">Saída</th>
-                    <th className="py-3 pr-4">Retorno</th>
-                    <th className="py-3 pr-4">KM</th>
-                    <th className="py-3 pr-4">Carro</th>
-                    <th className="py-3 pr-4">Motorista</th>
-                    <th className="py-3 pr-4">Valor</th>
-                    <th className="py-3 pr-4">Ações</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {viagens.map((viagem) => (
-                    <tr
-                      key={viagem.id}
-                      className="border-b border-slate-100 hover:bg-slate-50"
-                    >
-                      <td className="py-3 pr-4 font-medium text-slate-800">
-                        {viagem.clientes?.nome || "Cliente não informado"}
-                      </td>
-
-                      <td className="py-3 pr-4">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${statusClasse(
-                            viagem.status_viagem
-                          )}`}
-                        >
-                          {viagem.status_viagem || "Confirmada"}
-                        </span>
-                      </td>
-
-                      <td className="py-3 pr-4 text-slate-600">
-                        {viagem.tipo_viagem}
-                      </td>
-
-                      <td className="py-3 pr-4 text-slate-600">
-                        {viagem.origem}
-                      </td>
-
-                      <td className="py-3 pr-4 text-slate-600">
-                        {viagem.destino}
-                      </td>
-
-                      <td className="py-3 pr-4 text-slate-600">
-                        {formatarData(viagem.data_saida)}
-                      </td>
-
-                      <td className="py-3 pr-4 text-slate-600">
-                        {formatarData(viagem.data_retorno)}
-                      </td>
-
-                      <td className="py-3 pr-4 text-slate-600">
-                        {viagem.km_total}
-                      </td>
-
-                      <td className="py-3 pr-4 text-slate-600">
-                        {viagem.numero_carro || "-"}
-                      </td>
-
-                      <td className="py-3 pr-4 text-slate-600">
-                        {mostrarMotorista(viagem)}
-                      </td>
-
-                      <td className="py-3 pr-4 font-medium text-indigo-700">
-                        {formatarMoeda(viagem.valor_total)}
-                      </td>
-
-                      <td className="py-3 pr-4">
-                        <div className="flex items-center gap-4">
-                          <button
-                            onClick={() => navigate(`/viagens/${viagem.id}`)}
-                            className="text-sm text-indigo-600 hover:underline"
-                          >
-                            Detalhes
-                          </button>
-
-                          <button
-                            onClick={() => excluirViagem(viagem.id)}
-                            className="text-sm text-red-600 hover:underline"
-                          >
-                            Excluir
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                <p className="text-xs sm:text-sm text-slate-500">
+                  Viagens atuais e futuras
+                </p>
+              </div>
             </div>
-          )}
-        </section>
+          </header>
+
+          <section className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
+            <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 p-3 sm:p-5 shadow-sm">
+              <p className="text-[11px] sm:text-sm text-slate-500">
+                Total
+              </p>
+
+              <h2 className="text-xl sm:text-2xl font-semibold text-slate-800 mt-1 sm:mt-2">
+                {resumo.total}
+              </h2>
+            </div>
+
+            <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 p-3 sm:p-5 shadow-sm">
+              <p className="text-[11px] sm:text-sm text-slate-500">
+                Confirmadas
+              </p>
+
+              <h2 className="text-xl sm:text-2xl font-semibold text-green-700 mt-1 sm:mt-2">
+                {resumo.confirmadas}
+              </h2>
+            </div>
+
+            <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 p-3 sm:p-5 shadow-sm">
+              <p className="text-[11px] sm:text-sm text-slate-500">
+                Canceladas
+              </p>
+
+              <h2 className="text-xl sm:text-2xl font-semibold text-red-600 mt-1 sm:mt-2">
+                {resumo.canceladas}
+              </h2>
+            </div>
+          </section>
+
+          <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm mb-4 sm:mb-6">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div>
+                <h2 className="text-base sm:text-lg font-semibold text-slate-800">
+                  Lista de viagens
+                </h2>
+
+                <p className="text-xs sm:text-sm text-slate-500">
+                  {viagensFiltradas.length} viagem(ns) encontrada(s)
+                </p>
+              </div>
+
+              <input
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                placeholder="🔍 Pesquisar por cliente, rota, carro..."
+                className="w-full lg:w-80 rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              />
+            </div>
+          </section>
+
+          <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm">
+            {loading ? (
+              <div className="py-8 text-center">
+                <p className="text-sm text-slate-500">
+                  Carregando viagens...
+                </p>
+              </div>
+            ) : viagensFiltradas.length === 0 ? (
+              <div className="py-8 text-center">
+                <p className="text-sm font-medium text-slate-700">
+                  Nenhuma viagem atual ou futura encontrada.
+                </p>
+
+                <p className="text-xs text-slate-500 mt-1">
+                  Tente pesquisar por outro cliente, rota ou status.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                {viagensFiltradas.map((viagem) => (
+                  <article
+                    key={viagem.id}
+                    className="rounded-xl border border-slate-200 p-3 sm:p-4 hover:border-indigo-200 hover:bg-slate-50 transition"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="text-sm font-semibold text-slate-800 leading-snug break-words">
+                          {viagem.clientes?.nome || "Cliente não informado"}
+                        </h3>
+
+                        <p className="text-xs text-slate-500 mt-1 break-words">
+                          {viagem.clientes?.cpf_cnpj || "Documento não informado"}
+                        </p>
+                      </div>
+
+                      <span
+                        className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium ${statusClasse(
+                          viagem.status_viagem || "Confirmada"
+                        )}`}
+                      >
+                        {viagem.status_viagem || "Confirmada"}
+                      </span>
+                    </div>
+
+                    <div className="mt-4 rounded-xl bg-slate-50 border border-slate-100 p-3">
+                      <p className="text-xs text-slate-500">Rota</p>
+
+                      <p className="text-sm font-medium text-slate-800 mt-1 break-words">
+                        {viagem.origem || "-"} → {viagem.destino || "-"}
+                      </p>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      <div className="rounded-lg border border-slate-100 p-2">
+                        <p className="text-slate-500">Saída</p>
+                        <p className="text-slate-800 font-medium mt-1">
+                          {formatarData(viagem.data_saida)}
+                        </p>
+                      </div>
+
+                      <div className="rounded-lg border border-slate-100 p-2">
+                        <p className="text-slate-500">Retorno</p>
+                        <p className="text-slate-800 font-medium mt-1">
+                          {formatarData(viagem.data_retorno)}
+                        </p>
+                      </div>
+
+                      <div className="rounded-lg border border-slate-100 p-2">
+                        <p className="text-slate-500">Tipo</p>
+                        <p className="text-slate-800 font-medium mt-1">
+                          {viagem.tipo_viagem || "-"}
+                        </p>
+                      </div>
+
+                      <div className="rounded-lg border border-slate-100 p-2">
+                        <p className="text-slate-500">KM</p>
+                        <p className="text-slate-800 font-medium mt-1">
+                          {viagem.km_total || 0} km
+                        </p>
+                      </div>
+
+                      <div className="rounded-lg border border-slate-100 p-2">
+                        <p className="text-slate-500">Carro</p>
+                        <p className="text-slate-800 font-medium mt-1">
+                          {viagem.numero_carro || "-"}
+                        </p>
+                      </div>
+
+                      <div className="rounded-lg border border-slate-100 p-2">
+                        <p className="text-slate-500">Motorista</p>
+                        <p className="text-slate-800 font-medium mt-1 break-words">
+                          {mostrarMotorista(viagem)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
+                      <div>
+                        <p className="text-[11px] text-slate-500">
+                          Valor da viagem
+                        </p>
+
+                        <p className="text-base font-semibold text-indigo-700">
+                          {formatarMoeda(viagem.valor_total)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/viagens/${viagem.id}`)}
+                        className="flex-1 px-3 py-2 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 text-xs font-medium hover:bg-indigo-100"
+                      >
+                        Detalhes
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => excluirViagem(viagem.id)}
+                        className="flex-1 px-3 py-2 rounded-lg border border-red-200 bg-red-50 text-red-600 text-xs font-medium hover:bg-red-100"
+                      >
+                        Excluir
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
       </div>
     </>
   )
