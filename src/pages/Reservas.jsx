@@ -11,7 +11,7 @@ export default function Reservas() {
   const [clientes, setClientes] = useState([])
   const [salvando, setSalvando] = useState(false)
 
-  // Valor manual informado para o Citytour
+  // Valor manual do Citytour por carro
   const [valorCitytourManual, setValorCitytourManual] =
     useState("")
 
@@ -128,15 +128,18 @@ export default function Reservas() {
 
   const valorKm = onibusSelecionado?.valorKm
 
-  const numeroCarros = Number(form.numero_carros || 1)
+  const numeroCarros = Number(
+    form.numero_carros || 1
+  )
 
   // ---------------------------------------------------------
   // CITYTOUR
-  // O valor agora é informado manualmente.
-  // O valor digitado representa o valor POR CARRO.
+  // Valor informado manualmente POR CARRO
   // ---------------------------------------------------------
 
-  const valorCitytour = Number(valorCitytourManual || 0)
+  const valorCitytour = Number(
+    valorCitytourManual || 0
+  )
 
   const valorCitytourTotal =
     valorCitytour * numeroCarros
@@ -158,12 +161,14 @@ export default function Reservas() {
     numeroCarros
 
   // ---------------------------------------------------------
-  // DESPESA MOTORISTA
+  // DESPESA DO MOTORISTA
   // ---------------------------------------------------------
 
   const valorDespesaMotoristaTotal =
     form.despesa_motorista === "Empresa"
-      ? Number(form.valor_despesa_motorista || 0)
+      ? Number(
+          form.valor_despesa_motorista || 0
+        )
       : 0
 
   // ---------------------------------------------------------
@@ -174,7 +179,8 @@ export default function Reservas() {
     form.tipo_viagem === "Citytour"
       ? valorCitytourTotal +
         valorDespesaMotoristaTotal
-      : valorKm !== null && valorKm !== undefined
+      : valorKm !== null &&
+          valorKm !== undefined
         ? valorKmTotal +
           valorDiasParadosTotal +
           valorDespesaMotoristaTotal
@@ -184,7 +190,9 @@ export default function Reservas() {
   // PAGAMENTO
   // ---------------------------------------------------------
 
-  const valorPago = Number(form.valor_pago || 0)
+  const valorPago = Number(
+    form.valor_pago || 0
+  )
 
   const valorRestante = Math.max(
     valorTotal - valorPago,
@@ -197,6 +205,27 @@ export default function Reservas() {
         ? "Quitado"
         : "Sinal pago"
       : "Reservada"
+
+  // =========================================================
+  // TEXTO DO TOTAL
+  // =========================================================
+
+  function textoValorTotal() {
+    if (form.tipo_viagem === "Citytour") {
+      return valorCitytour > 0
+        ? formatarMoeda(valorTotal)
+        : "Informe o valor"
+    }
+
+    if (
+      valorKm !== null &&
+      valorKm !== undefined
+    ) {
+      return formatarMoeda(valorTotal)
+    }
+
+    return "Em aberto"
+  }
 
   // =========================================================
   // SALVAR RESERVA
@@ -223,7 +252,8 @@ export default function Reservas() {
 
     if (
       form.tipo_viagem === "Turismo" &&
-      (valorKm === null || valorKm === undefined)
+      (valorKm === null ||
+        valorKm === undefined)
     ) {
       alert(
         "Este tipo de ônibus está com valor em aberto. Defina o valor antes de salvar."
@@ -233,7 +263,7 @@ export default function Reservas() {
     }
 
     // -------------------------------------------------------
-    // VALIDAÇÃO QUANTIDADE DE CARROS
+    // QUANTIDADE DE CARROS
     // -------------------------------------------------------
 
     if (numeroCarros < 1) {
@@ -248,7 +278,7 @@ export default function Reservas() {
 
     try {
       // -----------------------------------------------------
-      // DIVISÃO DOS VALORES ENTRE OS CARROS
+      // DIVISÃO ENTRE OS CARROS
       // -----------------------------------------------------
 
       const valorTotalPorCarro =
@@ -261,93 +291,109 @@ export default function Reservas() {
         valorRestante / numeroCarros
 
       const valorDespesaMotoristaPorCarro =
-        valorDespesaMotoristaTotal / numeroCarros
+        valorDespesaMotoristaTotal /
+        numeroCarros
 
       // -----------------------------------------------------
-      // CRIA UMA RESERVA PARA CADA CARRO
+      // UMA RESERVA PARA CADA CARRO
       // -----------------------------------------------------
 
-      const reservasParaInserir = Array.from({
-        length: numeroCarros,
-      }).map((_, index) => ({
-        ...form,
+      const reservasParaInserir =
+        Array.from({
+          length: numeroCarros,
+        }).map((_, index) => ({
+          ...form,
 
-        numero_carros: 1,
+          numero_carros: 1,
 
-        numero_carro: "",
+          numero_carro: "",
 
-        km_total: Number(form.km_total || 0),
+          km_total: Number(
+            form.km_total || 0
+          ),
 
-        tipo_onibus: form.tipo_onibus,
+          tipo_onibus: form.tipo_onibus,
 
-        periodo_citytour:
-          form.tipo_viagem === "Citytour"
-            ? form.periodo_citytour
-            : null,
+          periodo_citytour:
+            form.tipo_viagem === "Citytour"
+              ? form.periodo_citytour
+              : null,
 
-        valor_km:
-          valorKm !== null && valorKm !== undefined
-            ? valorKm
-            : null,
+          valor_km:
+            valorKm !== null &&
+            valorKm !== undefined
+              ? valorKm
+              : null,
 
-        dias_parados: Number(
-          form.dias_parados || 0
-        ),
+          dias_parados: Number(
+            form.dias_parados || 0
+          ),
 
-        quantidade_motoristas: Number(
-          form.quantidade_motoristas
-        ),
+          quantidade_motoristas: Number(
+            form.quantidade_motoristas
+          ),
 
-        valor_despesa_motorista:
-          valorDespesaMotoristaPorCarro,
+          valor_despesa_motorista:
+            valorDespesaMotoristaPorCarro,
 
-        valor_total: valorTotalPorCarro,
+          valor_total:
+            valorTotalPorCarro,
 
-        valor_pago: valorPagoPorCarro,
+          valor_pago:
+            valorPagoPorCarro,
 
-        valor_restante:
-          valorRestantePorCarro,
+          valor_restante:
+            valorRestantePorCarro,
 
-        desconto: 0,
+          desconto: 0,
 
-        status: statusPagamento,
+          status: statusPagamento,
 
-        observacao: `Carro ${index + 1} de ${numeroCarros}`,
-      }))
+          observacao: `Carro ${
+            index + 1
+          } de ${numeroCarros}`,
+        }))
 
       // -----------------------------------------------------
-      // INSERIR RESERVAS
+      // SALVAR RESERVAS
       // -----------------------------------------------------
 
-      const { data, error } = await supabase
-        .from("reservas")
-        .insert(reservasParaInserir)
-        .select()
+      const { data, error } =
+        await supabase
+          .from("reservas")
+          .insert(reservasParaInserir)
+          .select()
 
       if (error) {
         throw error
       }
 
       // -----------------------------------------------------
-      // REGISTRAR SINAL / ENTRADA
+      // REGISTRAR ENTRADA / SINAL
       // -----------------------------------------------------
 
-      if (valorPago > 0 && data?.length > 0) {
-        const recebimentosParaInserir = data.map(
-          (reserva) => ({
+      if (
+        valorPago > 0 &&
+        data?.length > 0
+      ) {
+        const recebimentosParaInserir =
+          data.map((reserva) => ({
             reserva_id: reserva.id,
 
-            valor: valorPagoPorCarro,
+            valor:
+              valorPagoPorCarro,
 
             observacao:
               "Valor de entrada / sinal",
-          })
-        )
+          }))
 
-        const { error: erroRecebimento } =
-          await supabase
-            .from("recebimentos")
-            .insert(recebimentosParaInserir)
+        const {
+          error: erroRecebimento,
+        } = await supabase
+          .from("recebimentos")
+          .insert(
+            recebimentosParaInserir
+          )
 
         if (erroRecebimento) {
           console.error(
@@ -391,7 +437,7 @@ export default function Reservas() {
     "mb-1.5 block text-xs font-medium text-slate-500"
 
   const cardClass =
-    "min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
+    "min-w-0 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm sm:p-5"
 
   // =========================================================
   // TELA
@@ -401,10 +447,12 @@ export default function Reservas() {
     <>
       <Sidebar
         aberto={menuAberto}
-        onClose={() => setMenuAberto(false)}
+        onClose={() =>
+          setMenuAberto(false)
+        }
       />
 
-      <div className="min-h-screen bg-slate-100 px-3 py-4 sm:px-4 md:p-6">
+      <div className="min-h-screen bg-slate-100 px-3 pb-36 pt-4 sm:px-4 md:p-6 xl:pb-6">
         <div className="mx-auto max-w-[1500px]">
 
           {/* ================================================= */}
@@ -416,7 +464,9 @@ export default function Reservas() {
 
               <button
                 type="button"
-                onClick={() => setMenuAberto(true)}
+                onClick={() =>
+                  setMenuAberto(true)
+                }
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-2xl text-slate-700 shadow-sm transition hover:border-indigo-200 hover:text-indigo-700"
                 aria-label="Abrir menu"
               >
@@ -430,7 +480,9 @@ export default function Reservas() {
                 </h1>
 
                 <p className="text-xs text-slate-500 sm:text-sm">
-                  Cadastro, orçamento e reserva vinculada ao cliente
+                  Cadastro, orçamento e
+                  reserva vinculada ao
+                  cliente
                 </p>
 
               </div>
@@ -466,42 +518,66 @@ export default function Reservas() {
                   </h2>
 
                   <p className="mt-1 text-xs text-slate-500">
-                    Identificação do cliente e configuração da viagem.
+                    Identificação do
+                    cliente e configuração
+                    da viagem.
                   </p>
 
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-12">
+                <div className="grid grid-cols-2 gap-3 xl:grid-cols-12">
 
                   {/* CLIENTE */}
 
-                  <div className="md:col-span-2 xl:col-span-6">
+                  <div className="col-span-2 xl:col-span-6">
 
-                    <label className={labelClass}>
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
                       Cliente
                     </label>
 
                     <select
                       name="cliente_id"
-                      value={form.cliente_id}
-                      onChange={handleChange}
+                      value={
+                        form.cliente_id
+                      }
+                      onChange={
+                        handleChange
+                      }
                       required
-                      className={inputClass}
+                      className={
+                        inputClass
+                      }
                     >
 
                       <option value="">
-                        Selecione o cliente
+                        Selecione o
+                        cliente
                       </option>
 
-                      {clientes.map((cliente) => (
-                        <option
-                          key={cliente.id}
-                          value={cliente.id}
-                        >
-                          {cliente.nome} -{" "}
-                          {cliente.cpf_cnpj}
-                        </option>
-                      ))}
+                      {clientes.map(
+                        (cliente) => (
+                          <option
+                            key={
+                              cliente.id
+                            }
+                            value={
+                              cliente.id
+                            }
+                          >
+                            {
+                              cliente.nome
+                            }{" "}
+                            -{" "}
+                            {
+                              cliente.cpf_cnpj
+                            }
+                          </option>
+                        )
+                      )}
 
                     </select>
 
@@ -509,17 +585,27 @@ export default function Reservas() {
 
                   {/* TIPO DE VIAGEM */}
 
-                  <div className="xl:col-span-3">
+                  <div className="col-span-1 xl:col-span-3">
 
-                    <label className={labelClass}>
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
                       Tipo de viagem
                     </label>
 
                     <select
                       name="tipo_viagem"
-                      value={form.tipo_viagem}
-                      onChange={handleChange}
-                      className={inputClass}
+                      value={
+                        form.tipo_viagem
+                      }
+                      onChange={
+                        handleChange
+                      }
+                      className={
+                        inputClass
+                      }
                     >
 
                       <option value="Citytour">
@@ -538,10 +624,14 @@ export default function Reservas() {
 
                   {form.tipo_viagem ===
                     "Citytour" && (
-                    <div className="xl:col-span-3">
+                    <div className="col-span-1 xl:col-span-3">
 
-                      <label className={labelClass}>
-                        Período do Citytour
+                      <label
+                        className={
+                          labelClass
+                        }
+                      >
+                        Período
                       </label>
 
                       <select
@@ -549,8 +639,12 @@ export default function Reservas() {
                         value={
                           form.periodo_citytour
                         }
-                        onChange={handleChange}
-                        className={inputClass}
+                        onChange={
+                          handleChange
+                        }
+                        className={
+                          inputClass
+                        }
                       >
 
                         <option value="Integral">
@@ -570,16 +664,21 @@ export default function Reservas() {
 
                   {form.tipo_viagem ===
                     "Citytour" && (
-                    <div className="xl:col-span-3">
+                    <div className="col-span-1 xl:col-span-3">
 
-                      <label className={labelClass}>
-                        Valor do Citytour
+                      <label
+                        className={
+                          labelClass
+                        }
+                      >
+                        Valor Citytour
                       </label>
 
                       <input
                         type="number"
                         min="0"
                         step="0.01"
+                        inputMode="decimal"
                         value={
                           valorCitytourManual
                         }
@@ -589,8 +688,10 @@ export default function Reservas() {
                           )
                         }
                         required
-                        placeholder="R$ 0,00"
-                        className={inputClass}
+                        placeholder="0,00"
+                        className={
+                          inputClass
+                        }
                       />
 
                     </div>
@@ -598,9 +699,13 @@ export default function Reservas() {
 
                   {/* NÚMERO DE CARROS */}
 
-                  <div className="xl:col-span-3">
+                  <div className="col-span-1 xl:col-span-3">
 
-                    <label className={labelClass}>
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
                       Nº de carros
                     </label>
 
@@ -608,10 +713,17 @@ export default function Reservas() {
                       name="numero_carros"
                       type="number"
                       min="1"
-                      value={form.numero_carros}
-                      onChange={handleChange}
+                      inputMode="numeric"
+                      value={
+                        form.numero_carros
+                      }
+                      onChange={
+                        handleChange
+                      }
                       required
-                      className={inputClass}
+                      className={
+                        inputClass
+                      }
                     />
 
                   </div>
@@ -622,42 +734,61 @@ export default function Reservas() {
                     className={
                       form.tipo_viagem ===
                       "Citytour"
-                        ? "md:col-span-2 xl:col-span-6"
-                        : "md:col-span-2 xl:col-span-9"
+                        ? "col-span-2 xl:col-span-6"
+                        : "col-span-2 xl:col-span-6"
                     }
                   >
 
-                    <label className={labelClass}>
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
                       Tipo de ônibus
                     </label>
 
                     <select
                       name="tipo_onibus"
-                      value={form.tipo_onibus}
-                      onChange={handleChange}
+                      value={
+                        form.tipo_onibus
+                      }
+                      onChange={
+                        handleChange
+                      }
                       required
-                      className={inputClass}
+                      className={
+                        inputClass
+                      }
                     >
 
                       <option value="">
-                        Selecione o tipo de ônibus
+                        Selecione o tipo
+                        de ônibus
                       </option>
 
-                      {tiposOnibus.map((item) => (
-                        <option
-                          key={item.nome}
-                          value={item.nome}
-                        >
-                          {item.nome}
+                      {tiposOnibus.map(
+                        (item) => (
+                          <option
+                            key={
+                              item.nome
+                            }
+                            value={
+                              item.nome
+                            }
+                          >
+                            {item.nome}
 
-                          {item.valorKm !== null &&
-                          item.valorKm !== undefined
-                            ? ` - ${formatarMoeda(
-                                item.valorKm
-                              )} por KM`
-                            : " - Valor em aberto"}
-                        </option>
-                      ))}
+                            {item.valorKm !==
+                              null &&
+                            item.valorKm !==
+                              undefined
+                              ? ` - ${formatarMoeda(
+                                  item.valorKm
+                                )} por KM`
+                              : " - Valor em aberto"}
+                          </option>
+                        )
+                      )}
 
                     </select>
 
@@ -679,56 +810,80 @@ export default function Reservas() {
                   </h2>
 
                   <p className="mt-1 text-xs text-slate-500">
-                    Origem, destino, quilometragem e período da viagem.
+                    Origem, destino,
+                    quilometragem e
+                    período da viagem.
                   </p>
 
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-12">
+                <div className="grid grid-cols-2 gap-3 xl:grid-cols-12">
 
                   {/* ORIGEM */}
 
-                  <div className="xl:col-span-6">
+                  <div className="col-span-2 xl:col-span-6">
 
-                    <label className={labelClass}>
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
                       Origem
                     </label>
 
                     <input
                       name="origem"
                       value={form.origem}
-                      onChange={handleChange}
+                      onChange={
+                        handleChange
+                      }
                       required
                       placeholder="Origem"
-                      className={inputClass}
+                      className={
+                        inputClass
+                      }
                     />
 
                   </div>
 
                   {/* DESTINO */}
 
-                  <div className="xl:col-span-6">
+                  <div className="col-span-2 xl:col-span-6">
 
-                    <label className={labelClass}>
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
                       Destino
                     </label>
 
                     <input
                       name="destino"
-                      value={form.destino}
-                      onChange={handleChange}
+                      value={
+                        form.destino
+                      }
+                      onChange={
+                        handleChange
+                      }
                       required
                       placeholder="Destino"
-                      className={inputClass}
+                      className={
+                        inputClass
+                      }
                     />
 
                   </div>
 
                   {/* KM TOTAL */}
 
-                  <div className="xl:col-span-3">
+                  <div className="col-span-1 xl:col-span-3">
 
-                    <label className={labelClass}>
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
                       KM total
                     </label>
 
@@ -736,20 +891,31 @@ export default function Reservas() {
                       name="km_total"
                       type="number"
                       min="0"
-                      value={form.km_total}
-                      onChange={handleChange}
+                      inputMode="numeric"
+                      value={
+                        form.km_total
+                      }
+                      onChange={
+                        handleChange
+                      }
                       required
-                      placeholder="KM total"
-                      className={inputClass}
+                      placeholder="KM"
+                      className={
+                        inputClass
+                      }
                     />
 
                   </div>
 
                   {/* DIÁRIAS EXTRAS */}
 
-                  <div className="xl:col-span-3">
+                  <div className="col-span-1 xl:col-span-3">
 
-                    <label className={labelClass}>
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
                       Diárias extras
                     </label>
 
@@ -757,48 +923,75 @@ export default function Reservas() {
                       name="dias_parados"
                       type="number"
                       min="0"
-                      value={form.dias_parados}
-                      onChange={handleChange}
-                      placeholder="Diárias extras"
-                      className={inputClass}
+                      inputMode="numeric"
+                      value={
+                        form.dias_parados
+                      }
+                      onChange={
+                        handleChange
+                      }
+                      placeholder="0"
+                      className={
+                        inputClass
+                      }
                     />
 
                   </div>
 
                   {/* DATA DE SAÍDA */}
 
-                  <div className="xl:col-span-3">
+                  <div className="col-span-2 md:col-span-1 xl:col-span-3">
 
-                    <label className={labelClass}>
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
                       Data de saída
                     </label>
 
                     <input
                       name="data_saida"
                       type="datetime-local"
-                      value={form.data_saida}
-                      onChange={handleChange}
+                      value={
+                        form.data_saida
+                      }
+                      onChange={
+                        handleChange
+                      }
                       required
-                      className={inputClass}
+                      className={
+                        inputClass
+                      }
                     />
 
                   </div>
 
                   {/* DATA DE RETORNO */}
 
-                  <div className="xl:col-span-3">
+                  <div className="col-span-2 md:col-span-1 xl:col-span-3">
 
-                    <label className={labelClass}>
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
                       Data de retorno
                     </label>
 
                     <input
                       name="data_retorno"
                       type="datetime-local"
-                      value={form.data_retorno}
-                      onChange={handleChange}
+                      value={
+                        form.data_retorno
+                      }
+                      onChange={
+                        handleChange
+                      }
                       required
-                      className={inputClass}
+                      className={
+                        inputClass
+                      }
                     />
 
                   </div>
@@ -819,19 +1012,24 @@ export default function Reservas() {
                   </h2>
 
                   <p className="mt-1 text-xs text-slate-500">
-                    Despesas, pagamento e valor de entrada.
+                    Despesas, pagamento
+                    e valor de entrada.
                   </p>
 
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-12">
+                <div className="grid grid-cols-2 gap-3 xl:grid-cols-12">
 
                   {/* QUANTIDADE MOTORISTAS */}
 
-                  <div className="xl:col-span-3">
+                  <div className="col-span-1 xl:col-span-3">
 
-                    <label className={labelClass}>
-                      Quantidade de motoristas
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
+                      Motoristas
                     </label>
 
                     <select
@@ -839,8 +1037,12 @@ export default function Reservas() {
                       value={
                         form.quantidade_motoristas
                       }
-                      onChange={handleChange}
-                      className={inputClass}
+                      onChange={
+                        handleChange
+                      }
+                      className={
+                        inputClass
+                      }
                     >
 
                       <option value="1">
@@ -857,10 +1059,14 @@ export default function Reservas() {
 
                   {/* DESPESA MOTORISTA */}
 
-                  <div className="xl:col-span-3">
+                  <div className="col-span-1 xl:col-span-3">
 
-                    <label className={labelClass}>
-                      Despesa do motorista
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
+                      Despesa
                     </label>
 
                     <select
@@ -868,8 +1074,12 @@ export default function Reservas() {
                       value={
                         form.despesa_motorista
                       }
-                      onChange={handleChange}
-                      className={inputClass}
+                      onChange={
+                        handleChange
+                      }
+                      className={
+                        inputClass
+                      }
                     >
 
                       <option value="Cliente">
@@ -884,14 +1094,18 @@ export default function Reservas() {
 
                   </div>
 
-                  {/* VALOR DESPESA MOTORISTA */}
+                  {/* VALOR DESPESA */}
 
                   {form.despesa_motorista ===
                     "Empresa" && (
-                    <div className="xl:col-span-3">
+                    <div className="col-span-2 md:col-span-1 xl:col-span-3">
 
-                      <label className={labelClass}>
-                        Valor da despesa do motorista
+                      <label
+                        className={
+                          labelClass
+                        }
+                      >
+                        Valor da despesa
                       </label>
 
                       <input
@@ -899,23 +1113,32 @@ export default function Reservas() {
                         type="number"
                         min="0"
                         step="0.01"
+                        inputMode="decimal"
                         value={
                           form.valor_despesa_motorista
                         }
-                        onChange={handleChange}
-                        placeholder="Valor da despesa"
-                        className={inputClass}
+                        onChange={
+                          handleChange
+                        }
+                        placeholder="0,00"
+                        className={
+                          inputClass
+                        }
                       />
 
                     </div>
                   )}
 
-                  {/* FORMA PAGAMENTO */}
+                  {/* FORMA DE PAGAMENTO */}
 
-                  <div className="xl:col-span-3">
+                  <div className="col-span-1 xl:col-span-3">
 
-                    <label className={labelClass}>
-                      Forma de pagamento
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
+                      Pagamento
                     </label>
 
                     <select
@@ -923,8 +1146,12 @@ export default function Reservas() {
                       value={
                         form.forma_pagamento
                       }
-                      onChange={handleChange}
-                      className={inputClass}
+                      onChange={
+                        handleChange
+                      }
+                      className={
+                        inputClass
+                      }
                     >
 
                       <option value="Pix">
@@ -943,12 +1170,16 @@ export default function Reservas() {
 
                   </div>
 
-                  {/* VALOR ENTRADA */}
+                  {/* VALOR DA ENTRADA */}
 
-                  <div className="xl:col-span-3">
+                  <div className="col-span-1 xl:col-span-3">
 
-                    <label className={labelClass}>
-                      Valor de entrada / sinal
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
+                      Entrada / sinal
                     </label>
 
                     <input
@@ -956,10 +1187,17 @@ export default function Reservas() {
                       type="number"
                       min="0"
                       step="0.01"
-                      value={form.valor_pago}
-                      onChange={handleChange}
-                      placeholder="Valor de entrada / sinal"
-                      className={inputClass}
+                      inputMode="decimal"
+                      value={
+                        form.valor_pago
+                      }
+                      onChange={
+                        handleChange
+                      }
+                      placeholder="0,00"
+                      className={
+                        inputClass
+                      }
                     />
 
                   </div>
@@ -970,14 +1208,12 @@ export default function Reservas() {
             </div>
 
             {/* =============================================== */}
-            {/* RESULTADO */}
+            {/* RESULTADO - DESKTOP */}
             {/* =============================================== */}
 
             <aside
-              className={`${cardClass} self-start xl:sticky xl:top-4`}
+              className={`${cardClass} hidden self-start xl:sticky xl:top-4 xl:block`}
             >
-
-              {/* CABEÇALHO RESULTADO */}
 
               <div className="flex items-start justify-between gap-3">
 
@@ -988,14 +1224,16 @@ export default function Reservas() {
                   </h2>
 
                   <p className="mt-1 text-xs text-slate-500">
-                    Valor estimado da reserva
+                    Valor estimado da
+                    reserva
                   </p>
 
                 </div>
 
                 <span
                   className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ${
-                    statusPagamento === "Quitado"
+                    statusPagamento ===
+                    "Quitado"
                       ? "border border-green-100 bg-green-50 text-green-700"
                       : statusPagamento ===
                           "Sinal pago"
@@ -1008,7 +1246,7 @@ export default function Reservas() {
 
               </div>
 
-              {/* VALOR TOTAL */}
+              {/* TOTAL */}
 
               <div className="mt-5">
 
@@ -1017,21 +1255,12 @@ export default function Reservas() {
                 </p>
 
                 <div className="mt-1 break-words text-3xl font-bold tracking-tight text-indigo-700">
-
-                  {form.tipo_viagem === "Citytour"
-                    ? valorCitytour > 0
-                      ? formatarMoeda(valorTotal)
-                      : "Informe o valor"
-                    : valorKm !== null &&
-                        valorKm !== undefined
-                      ? formatarMoeda(valorTotal)
-                      : "Em aberto"}
-
+                  {textoValorTotal()}
                 </div>
 
               </div>
 
-              {/* PAGO / RESTANTE */}
+              {/* PAGO E RESTANTE */}
 
               <div className="mt-5 grid grid-cols-2 gap-2">
 
@@ -1042,7 +1271,9 @@ export default function Reservas() {
                   </p>
 
                   <p className="mt-1 text-sm font-semibold text-slate-800">
-                    {formatarMoeda(valorPago)}
+                    {formatarMoeda(
+                      valorPago
+                    )}
                   </p>
 
                 </div>
@@ -1054,14 +1285,16 @@ export default function Reservas() {
                   </p>
 
                   <p className="mt-1 text-sm font-semibold text-slate-800">
-                    {formatarMoeda(valorRestante)}
+                    {formatarMoeda(
+                      valorRestante
+                    )}
                   </p>
 
                 </div>
 
               </div>
 
-              {/* BOTÃO DETALHES */}
+              {/* DETALHES */}
 
               <button
                 type="button"
@@ -1073,14 +1306,10 @@ export default function Reservas() {
                 }
                 className="mt-4 w-full rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-medium text-indigo-700 transition hover:bg-indigo-100"
               >
-
                 {detalhesResultadoAberto
                   ? "Ocultar detalhes"
                   : "+ Detalhes"}
-
               </button>
-
-              {/* DETALHES */}
 
               {detalhesResultadoAberto && (
                 <div className="mt-4 border-t border-slate-100 pt-4">
@@ -1089,20 +1318,16 @@ export default function Reservas() {
 
                     <p>
                       Tipo de viagem:{" "}
-
                       <b className="text-slate-700">
                         {form.tipo_viagem}
                       </b>
                     </p>
-
-                    {/* DETALHES CITYTOUR */}
 
                     {form.tipo_viagem ===
                       "Citytour" && (
                       <>
                         <p>
                           Período:{" "}
-
                           <b className="text-slate-700">
                             {
                               form.periodo_citytour
@@ -1111,8 +1336,7 @@ export default function Reservas() {
                         </p>
 
                         <p>
-                          Valor do Citytour por carro:{" "}
-
+                          Valor por carro:{" "}
                           <b className="text-slate-700">
                             {formatarMoeda(
                               valorCitytour
@@ -1124,31 +1348,30 @@ export default function Reservas() {
 
                     <p>
                       KM total:{" "}
-
                       <b className="text-slate-700">
-                        {form.km_total || 0} km
+                        {form.km_total ||
+                          0}{" "}
+                        km
                       </b>
                     </p>
 
                     <p>
                       Tipo de ônibus:{" "}
-
                       <b className="text-slate-700">
                         {form.tipo_onibus ||
                           "Não selecionado"}
                       </b>
                     </p>
 
-                    {/* VALOR KM SOMENTE TURISMO */}
-
                     {form.tipo_viagem ===
                       "Turismo" && (
                       <p>
                         Valor por KM:{" "}
-
                         <b className="text-slate-700">
-                          {valorKm !== null &&
-                          valorKm !== undefined
+                          {valorKm !==
+                            null &&
+                          valorKm !==
+                            undefined
                             ? formatarMoeda(
                                 valorKm
                               )
@@ -1159,15 +1382,14 @@ export default function Reservas() {
 
                     <p>
                       Diárias extras:{" "}
-
                       <b className="text-slate-700">
-                        {form.dias_parados || 0}
+                        {form.dias_parados ||
+                          0}
                       </b>
                     </p>
 
                     <p>
                       Nº de carros:{" "}
-
                       <b className="text-slate-700">
                         {numeroCarros}
                       </b>
@@ -1177,8 +1399,8 @@ export default function Reservas() {
                       "Citytour" &&
                       numeroCarros > 1 && (
                         <p>
-                          Total dos Citytours:{" "}
-
+                          Total dos
+                          Citytours:{" "}
                           <b className="text-slate-700">
                             {formatarMoeda(
                               valorCitytourTotal
@@ -1189,7 +1411,6 @@ export default function Reservas() {
 
                     <p>
                       Despesa motorista:{" "}
-
                       <b className="text-slate-700">
                         {
                           form.despesa_motorista
@@ -1201,7 +1422,6 @@ export default function Reservas() {
                       "Empresa" && (
                       <p>
                         Valor da despesa:{" "}
-
                         <b className="text-slate-700">
                           {formatarMoeda(
                             valorDespesaMotoristaTotal
@@ -1215,9 +1435,7 @@ export default function Reservas() {
                 </div>
               )}
 
-              {/* ============================================= */}
-              {/* BOTÕES */}
-              {/* ============================================= */}
+              {/* BOTÕES DESKTOP */}
 
               <div className="mt-5 space-y-2.5 border-t border-slate-100 pt-5">
 
@@ -1226,16 +1444,16 @@ export default function Reservas() {
                   disabled={salvando}
                   className="w-full rounded-xl bg-indigo-600 px-5 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-
                   {salvando
                     ? "Salvando..."
                     : "Salvar reserva"}
-
                 </button>
 
                 <button
                   type="button"
-                  onClick={limparFormulario}
+                  onClick={
+                    limparFormulario
+                  }
                   className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
                 >
                   Limpar
@@ -1244,6 +1462,381 @@ export default function Reservas() {
               </div>
 
             </aside>
+
+            {/* =============================================== */}
+            {/* PAINEL DE RESUMO - MOBILE */}
+            {/* =============================================== */}
+
+            {detalhesResultadoAberto && (
+              <div className="fixed inset-x-3 bottom-24 z-40 mx-auto max-h-[60vh] max-w-lg overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl xl:hidden">
+
+                <div className="flex items-center justify-between gap-3">
+
+                  <div>
+
+                    <p className="text-xs font-medium text-slate-500">
+                      Resumo da reserva
+                    </p>
+
+                    <h3 className="text-base font-semibold text-slate-800">
+                      Detalhes
+                    </h3>
+
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDetalhesResultadoAberto(
+                        false
+                      )
+                    }
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-500"
+                    aria-label="Fechar resumo"
+                  >
+                    ✕
+                  </button>
+
+                </div>
+
+                {/* PAGO / RESTANTE */}
+
+                <div className="mt-4 grid grid-cols-2 gap-2">
+
+                  <div className="rounded-xl bg-slate-50 p-3">
+
+                    <p className="text-[11px] text-slate-500">
+                      Pago
+                    </p>
+
+                    <p className="mt-1 text-sm font-semibold text-slate-800">
+                      {formatarMoeda(
+                        valorPago
+                      )}
+                    </p>
+
+                  </div>
+
+                  <div className="rounded-xl bg-slate-50 p-3">
+
+                    <p className="text-[11px] text-slate-500">
+                      Restante
+                    </p>
+
+                    <p className="mt-1 text-sm font-semibold text-slate-800">
+                      {formatarMoeda(
+                        valorRestante
+                      )}
+                    </p>
+
+                  </div>
+
+                </div>
+
+                {/* INFORMAÇÕES */}
+
+                <div className="mt-4 space-y-2.5 border-t border-slate-100 pt-4 text-xs text-slate-500">
+
+                  <div className="flex items-center justify-between gap-3">
+
+                    <span>
+                      Tipo de viagem
+                    </span>
+
+                    <b className="text-right text-slate-700">
+                      {form.tipo_viagem}
+                    </b>
+
+                  </div>
+
+                  {form.tipo_viagem ===
+                    "Citytour" && (
+                    <>
+                      <div className="flex items-center justify-between gap-3">
+
+                        <span>
+                          Período
+                        </span>
+
+                        <b className="text-right text-slate-700">
+                          {
+                            form.periodo_citytour
+                          }
+                        </b>
+
+                      </div>
+
+                      <div className="flex items-center justify-between gap-3">
+
+                        <span>
+                          Valor por carro
+                        </span>
+
+                        <b className="text-right text-slate-700">
+                          {formatarMoeda(
+                            valorCitytour
+                          )}
+                        </b>
+
+                      </div>
+                    </>
+                  )}
+
+                  <div className="flex items-center justify-between gap-3">
+
+                    <span>
+                      Nº de carros
+                    </span>
+
+                    <b className="text-right text-slate-700">
+                      {numeroCarros}
+                    </b>
+
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3">
+
+                    <span>
+                      KM total
+                    </span>
+
+                    <b className="text-right text-slate-700">
+                      {form.km_total ||
+                        0}{" "}
+                      km
+                    </b>
+
+                  </div>
+
+                  <div className="flex items-start justify-between gap-4">
+
+                    <span className="shrink-0">
+                      Ônibus
+                    </span>
+
+                    <b className="text-right text-slate-700">
+                      {form.tipo_onibus ||
+                        "Não selecionado"}
+                    </b>
+
+                  </div>
+
+                  {form.tipo_viagem ===
+                    "Turismo" && (
+                    <div className="flex items-center justify-between gap-3">
+
+                      <span>
+                        Valor por KM
+                      </span>
+
+                      <b className="text-right text-slate-700">
+                        {valorKm !== null &&
+                        valorKm !==
+                          undefined
+                          ? formatarMoeda(
+                              valorKm
+                            )
+                          : "Em aberto"}
+                      </b>
+
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between gap-3">
+
+                    <span>
+                      Diárias extras
+                    </span>
+
+                    <b className="text-right text-slate-700">
+                      {form.dias_parados ||
+                        0}
+                    </b>
+
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3">
+
+                    <span>
+                      Motoristas
+                    </span>
+
+                    <b className="text-right text-slate-700">
+                      {
+                        form.quantidade_motoristas
+                      }
+                    </b>
+
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3">
+
+                    <span>
+                      Despesa motorista
+                    </span>
+
+                    <b className="text-right text-slate-700">
+                      {
+                        form.despesa_motorista
+                      }
+                    </b>
+
+                  </div>
+
+                  {form.despesa_motorista ===
+                    "Empresa" && (
+                    <div className="flex items-center justify-between gap-3">
+
+                      <span>
+                        Valor despesa
+                      </span>
+
+                      <b className="text-right text-slate-700">
+                        {formatarMoeda(
+                          valorDespesaMotoristaTotal
+                        )}
+                      </b>
+
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between gap-3">
+
+                    <span>
+                      Pagamento
+                    </span>
+
+                    <b className="text-right text-slate-700">
+                      {
+                        form.forma_pagamento
+                      }
+                    </b>
+
+                  </div>
+
+                </div>
+
+                {/* TOTAL NO RESUMO */}
+
+                <div className="mt-4 flex items-end justify-between gap-3 rounded-xl bg-indigo-50 p-3">
+
+                  <div>
+
+                    <p className="text-[11px] font-medium text-indigo-500">
+                      Valor total
+                    </p>
+
+                    <p className="mt-0.5 text-xl font-bold text-indigo-700">
+                      {textoValorTotal()}
+                    </p>
+
+                  </div>
+
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-[10px] font-medium ${
+                      statusPagamento ===
+                      "Quitado"
+                        ? "border border-green-100 bg-green-50 text-green-700"
+                        : statusPagamento ===
+                            "Sinal pago"
+                          ? "border border-indigo-200 bg-white text-indigo-700"
+                          : "border border-slate-200 bg-white text-slate-600"
+                    }`}
+                  >
+                    {statusPagamento}
+                  </span>
+
+                </div>
+
+                {/* LIMPAR */}
+
+                <button
+                  type="button"
+                  onClick={
+                    limparFormulario
+                  }
+                  className="mt-3 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-medium text-slate-500 transition hover:bg-slate-50"
+                >
+                  Limpar formulário
+                </button>
+
+              </div>
+            )}
+
+            {/* =============================================== */}
+            {/* BARRA FIXA - MOBILE */}
+            {/* =============================================== */}
+
+            <div className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2.5 shadow-[0_-5px_20px_rgba(15,23,42,0.10)] xl:hidden">
+
+              <div className="mx-auto max-w-lg">
+
+                {/* TOTAL */}
+
+                <div className="mb-2 flex items-center justify-between gap-3">
+
+                  <div className="min-w-0">
+
+                    <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                      Valor total
+                    </p>
+
+                    <p className="truncate text-xl font-bold leading-tight text-indigo-700">
+                      {textoValorTotal()}
+                    </p>
+
+                  </div>
+
+                  <span
+                    className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-medium ${
+                      statusPagamento ===
+                      "Quitado"
+                        ? "border border-green-100 bg-green-50 text-green-700"
+                        : statusPagamento ===
+                            "Sinal pago"
+                          ? "border border-indigo-100 bg-indigo-50 text-indigo-700"
+                          : "border border-slate-200 bg-slate-50 text-slate-600"
+                    }`}
+                  >
+                    {statusPagamento}
+                  </span>
+
+                </div>
+
+                {/* BOTÕES */}
+
+                <div className="grid grid-cols-[105px_1fr] gap-2">
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDetalhesResultadoAberto(
+                        (estadoAtual) =>
+                          !estadoAtual
+                      )
+                    }
+                    className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2.5 text-xs font-semibold text-indigo-700 transition active:scale-[0.98]"
+                  >
+                    {detalhesResultadoAberto
+                      ? "Fechar"
+                      : "Resumo"}
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={salvando}
+                    className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {salvando
+                      ? "Salvando..."
+                      : "Salvar reserva"}
+                  </button>
+
+                </div>
+
+              </div>
+
+            </div>
 
           </form>
 
