@@ -2,18 +2,43 @@ import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import Sidebar from "../components/Sidebar"
 import { supabase } from "../services/supabase"
-import { formatarCpfCnpj, formatarTelefone } from "../utils/formatadores"
+import {
+  formatarCpfCnpj,
+  formatarTelefone,
+} from "../utils/formatadores"
 
-export default function Clientes() {
-  const navigate = useNavigate()
+const UFS = [
+  "AC",
+  "AL",
+  "AP",
+  "AM",
+  "BA",
+  "CE",
+  "DF",
+  "ES",
+  "GO",
+  "MA",
+  "MT",
+  "MS",
+  "MG",
+  "PA",
+  "PB",
+  "PR",
+  "PE",
+  "PI",
+  "RJ",
+  "RN",
+  "RS",
+  "RO",
+  "RR",
+  "SC",
+  "SP",
+  "SE",
+  "TO",
+]
 
-  const [menuAberto, setMenuAberto] = useState(false)
-  const [formAberto, setFormAberto] = useState(false)
-  const [clientes, setClientes] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [busca, setBusca] = useState("")
-
-  const [form, setForm] = useState({
+function criarFormularioInicial() {
+  return {
     nome: "",
     cpf_cnpj: "",
     telefone: "",
@@ -27,52 +52,110 @@ export default function Clientes() {
     complemento: "",
     inscricao_estadual: "",
     tipo_cliente: "Pessoa Física",
-  })
+  }
+}
+
+export default function Clientes() {
+  const navigate = useNavigate()
+
+  const [menuAberto, setMenuAberto] = useState(false)
+  const [formAberto, setFormAberto] = useState(false)
+
+  const [clientes, setClientes] = useState([])
+  const [carregandoClientes, setCarregandoClientes] =
+    useState(true)
+
+  const [salvando, setSalvando] = useState(false)
+  const [excluindoId, setExcluindoId] = useState(null)
+
+  const [busca, setBusca] = useState("")
+
+  const [form, setForm] = useState(
+    criarFormularioInicial
+  )
+
+  // =========================================================
+  // CARREGAR CLIENTES
+  // ORDEM ALFABÉTICA A-Z
+  // =========================================================
 
   useEffect(() => {
     carregarClientes()
   }, [])
 
   async function carregarClientes() {
-    const { data, error } = await supabase
-      .from("clientes")
-      .select("*")
-      .order("created_at", { ascending: false })
+    setCarregandoClientes(true)
 
-    if (!error) {
+    try {
+      const { data, error } = await supabase
+        .from("clientes")
+        .select("*")
+        .order("nome", {
+          ascending: true,
+        })
+
+      if (error) {
+        throw error
+      }
+
       setClientes(data || [])
+    } catch (error) {
+      console.error(
+        "Erro ao carregar clientes:",
+        error
+      )
+
+      alert("Erro ao carregar clientes.")
+    } finally {
+      setCarregandoClientes(false)
     }
   }
 
+  // =========================================================
+  // FORMULÁRIO
+  // =========================================================
+
   function limparFormulario() {
-    setForm({
-      nome: "",
-      cpf_cnpj: "",
-      telefone: "",
-      email: "",
-      cep: "",
-      uf: "",
-      cidade: "",
-      bairro: "",
-      endereco: "",
-      numero: "",
-      complemento: "",
-      inscricao_estadual: "",
-      tipo_cliente: "Pessoa Física",
-    })
+    setForm(criarFormularioInicial())
   }
 
   function handleChange(e) {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    })
+    const { name, value } = e.target
+
+    setForm((formAtual) => ({
+      ...formAtual,
+      [name]: value,
+    }))
   }
 
-  const clientesFiltrados = useMemo(() => {
-    const texto = busca.toLowerCase().trim()
+  function alternarFormulario() {
+    if (formAberto) {
+      limparFormulario()
+      setFormAberto(false)
+      return
+    }
 
-    if (!texto) return clientes
+    limparFormulario()
+    setFormAberto(true)
+  }
+
+  function cancelarCadastro() {
+    limparFormulario()
+    setFormAberto(false)
+  }
+
+  // =========================================================
+  // FILTRO
+  // =========================================================
+
+  const clientesFiltrados = useMemo(() => {
+    const texto = busca
+      .toLowerCase()
+      .trim()
+
+    if (!texto) {
+      return clientes
+    }
 
     return clientes.filter((cliente) =>
       `
@@ -82,21 +165,30 @@ export default function Clientes() {
         ${cliente.email || ""}
         ${cliente.cidade || ""}
         ${cliente.uf || ""}
+        ${cliente.tipo_cliente || ""}
       `
         .toLowerCase()
         .includes(texto)
     )
   }, [clientes, busca])
 
+  // =========================================================
+  // RESUMO
+  // =========================================================
+
   const resumo = useMemo(() => {
     const total = clientes.length
 
     const pessoaFisica = clientes.filter(
-      (cliente) => cliente.tipo_cliente === "Pessoa Física"
+      (cliente) =>
+        cliente.tipo_cliente ===
+        "Pessoa Física"
     ).length
 
     const pessoaJuridica = clientes.filter(
-      (cliente) => cliente.tipo_cliente === "Pessoa Jurídica"
+      (cliente) =>
+        cliente.tipo_cliente ===
+        "Pessoa Jurídica"
     ).length
 
     return {
@@ -106,510 +198,1123 @@ export default function Clientes() {
     }
   }, [clientes])
 
+  // =========================================================
+  // SALVAR
+  // =========================================================
+
   async function salvarCliente(e) {
     e.preventDefault()
-    setLoading(true)
 
-    const { error } = await supabase.from("clientes").insert([form])
+    if (salvando) return
 
-    setLoading(false)
+    setSalvando(true)
 
-    if (error) {
+    try {
+      const { error } = await supabase
+        .from("clientes")
+        .insert([form])
+
+      if (error) {
+        throw error
+      }
+
+      limparFormulario()
+      setFormAberto(false)
+
+      await carregarClientes()
+    } catch (error) {
+      console.error(
+        "Erro ao salvar cliente:",
+        error
+      )
+
       alert("Erro ao salvar cliente.")
-      console.error(error)
-      return
+    } finally {
+      setSalvando(false)
     }
-
-    limparFormulario()
-    setFormAberto(false)
-    carregarClientes()
   }
 
+  // =========================================================
+  // EXCLUIR
+  // =========================================================
+
   async function excluirCliente(id) {
-    const confirmar = window.confirm("Deseja realmente excluir este cliente?")
+    const confirmar = window.confirm(
+      "Deseja realmente excluir este cliente?"
+    )
 
     if (!confirmar) return
 
-    const { error } = await supabase.from("clientes").delete().eq("id", id)
+    setExcluindoId(id)
 
-    if (error) {
-      console.error(error)
-      alert("Erro ao excluir cliente.")
-      return
+    try {
+      const { error } = await supabase
+        .from("clientes")
+        .delete()
+        .eq("id", id)
+
+      if (error) {
+        throw error
+      }
+
+      await carregarClientes()
+    } catch (error) {
+      console.error(
+        "Erro ao excluir cliente:",
+        error
+      )
+
+      alert(
+        "Não foi possível excluir o cliente."
+      )
+    } finally {
+      setExcluindoId(null)
     }
-
-    carregarClientes()
   }
+
+  // =========================================================
+  // CLASSES
+  // =========================================================
+
+  const inputClass =
+    "h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+
+  const labelClass =
+    "mb-1.5 block text-xs font-medium text-slate-500"
+
+  const cardClass =
+    "rounded-2xl border border-slate-200 bg-white shadow-sm"
+
+  // =========================================================
+  // TELA
+  // =========================================================
 
   return (
     <>
-      <Sidebar aberto={menuAberto} onClose={() => setMenuAberto(false)} />
+      <Sidebar
+        aberto={menuAberto}
+        onClose={() =>
+          setMenuAberto(false)
+        }
+      />
+
+      {menuAberto && (
+        <div
+          onClick={() =>
+            setMenuAberto(false)
+          }
+          className="fixed inset-0 z-40 bg-black/40"
+        />
+      )}
 
       <div className="min-h-screen bg-slate-100 px-3 py-4 sm:px-4 md:p-6">
-        <div className="mx-auto max-w-6xl">
-          <header className="mb-4 sm:mb-6">
-            <div className="flex items-start justify-between gap-3">
+        <div className="mx-auto max-w-[1500px]">
+
+          {/* ================================================= */}
+          {/* CABEÇALHO */}
+          {/* ================================================= */}
+
+          <header className="mb-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+
               <div className="flex items-start gap-3">
+
                 <button
                   type="button"
-                  onClick={() => setMenuAberto(true)}
-                  className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-700 text-2xl shadow-sm hover:text-indigo-700"
+                  onClick={() =>
+                    setMenuAberto(true)
+                  }
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-2xl text-slate-700 shadow-sm transition hover:border-indigo-200 hover:text-indigo-700"
                   aria-label="Abrir menu"
                 >
                   ☰
                 </button>
 
                 <div className="min-w-0">
-                  <h1 className="text-xl sm:text-2xl font-semibold text-slate-800">
+
+                  <h1 className="text-xl font-semibold text-slate-800 sm:text-2xl">
                     Clientes
                   </h1>
 
-                  <p className="text-xs sm:text-sm text-slate-500">
+                  <p className="mt-0.5 text-xs text-slate-500 sm:text-sm">
                     Cadastro e gestão dos clientes
                   </p>
+
                 </div>
+
               </div>
+
+              <button
+                type="button"
+                onClick={
+                  alternarFormulario
+                }
+                className={`flex h-10 w-full items-center justify-center rounded-xl px-4 text-sm font-semibold shadow-sm transition sm:w-auto ${
+                  formAberto
+                    ? "border border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
+                    : "bg-indigo-600 text-white hover:bg-indigo-700"
+                }`}
+              >
+                {formAberto
+                  ? "Fechar cadastro"
+                  : "+ Novo cliente"}
+              </button>
+
             </div>
           </header>
 
-          <section className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
-            <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 p-3 sm:p-5 shadow-sm">
-              <p className="text-[11px] sm:text-sm text-slate-500">
-                Total
-              </p>
+          {/* ================================================= */}
+          {/* INDICADORES */}
+          {/* ================================================= */}
 
-              <h2 className="text-xl sm:text-2xl font-semibold text-slate-800 mt-1 sm:mt-2">
-                {resumo.total}
-              </h2>
+          <section className="mb-4 grid grid-cols-3 gap-2 sm:gap-4">
+
+            {/* TOTAL */}
+
+            <div
+              className={`${cardClass} p-3 sm:p-5`}
+            >
+              <div className="flex items-start justify-between">
+
+                <div>
+
+                  <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400 sm:text-xs">
+                    Total
+                  </p>
+
+                  <p className="mt-1 text-2xl font-semibold text-slate-800 sm:mt-2 sm:text-3xl">
+                    {resumo.total}
+                  </p>
+
+                </div>
+
+                <div className="hidden h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-xs font-bold text-slate-600 sm:flex">
+                  CL
+                </div>
+
+              </div>
             </div>
 
-            <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 p-3 sm:p-5 shadow-sm">
-              <p className="text-[11px] sm:text-sm text-slate-500">
-                Física
-              </p>
+            {/* PF */}
 
-              <h2 className="text-xl sm:text-2xl font-semibold text-green-700 mt-1 sm:mt-2">
-                {resumo.pessoaFisica}
-              </h2>
+            <div
+              className={`${cardClass} p-3 sm:p-5`}
+            >
+              <div className="flex items-start justify-between">
+
+                <div>
+
+                  <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400 sm:text-xs">
+                    Pessoa Física
+                  </p>
+
+                  <p className="mt-1 text-2xl font-semibold text-emerald-700 sm:mt-2 sm:text-3xl">
+                    {
+                      resumo.pessoaFisica
+                    }
+                  </p>
+
+                </div>
+
+                <div className="hidden h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-xs font-bold text-emerald-700 sm:flex">
+                  PF
+                </div>
+
+              </div>
             </div>
 
-            <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 p-3 sm:p-5 shadow-sm">
-              <p className="text-[11px] sm:text-sm text-slate-500">
-                Jurídica
-              </p>
+            {/* PJ */}
 
-              <h2 className="text-xl sm:text-2xl font-semibold text-indigo-700 mt-1 sm:mt-2">
-                {resumo.pessoaJuridica}
-              </h2>
+            <div
+              className={`${cardClass} p-3 sm:p-5`}
+            >
+              <div className="flex items-start justify-between">
+
+                <div>
+
+                  <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400 sm:text-xs">
+                    Pessoa Jurídica
+                  </p>
+
+                  <p className="mt-1 text-2xl font-semibold text-indigo-700 sm:mt-2 sm:text-3xl">
+                    {
+                      resumo.pessoaJuridica
+                    }
+                  </p>
+
+                </div>
+
+                <div className="hidden h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-xs font-bold text-indigo-700 sm:flex">
+                  PJ
+                </div>
+
+              </div>
             </div>
+
           </section>
 
-          <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm mb-4 sm:mb-6">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          {/* ================================================= */}
+          {/* PESQUISA */}
+          {/* ================================================= */}
+
+          <section
+            className={`${cardClass} mb-4 p-4 sm:p-5`}
+          >
+
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+
               <div>
-                <h2 className="text-base sm:text-lg font-semibold text-slate-800">
+
+                <h2 className="text-base font-semibold text-slate-800 sm:text-lg">
                   Clientes cadastrados
                 </h2>
 
-                <p className="text-xs sm:text-sm text-slate-500">
-                  {clientesFiltrados.length} cliente(s) encontrado(s)
+                <p className="mt-1 text-xs text-slate-500">
+                  {
+                    clientesFiltrados.length
+                  }{" "}
+                  {clientesFiltrados.length ===
+                  1
+                    ? "cliente encontrado"
+                    : "clientes encontrados"}
                 </p>
+
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-                <input
-                  value={busca}
-                  onChange={(e) => setBusca(e.target.value)}
-                  placeholder="🔍 Pesquisar cliente..."
-                  className="w-full sm:w-72 rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                />
+              <div className="flex w-full items-center gap-2 lg:w-auto">
 
-                <button
-                  type="button"
-                  onClick={() => setFormAberto(!formAberto)}
-                  className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm"
-                >
-                  {formAberto ? "Fechar cadastro" : "+ Novo cliente"}
-                </button>
+                <div className="relative min-w-0 flex-1 lg:w-80 lg:flex-none">
+
+                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">
+                    ⌕
+                  </span>
+
+                  <input
+                    value={busca}
+                    onChange={(e) =>
+                      setBusca(
+                        e.target.value
+                      )
+                    }
+                    placeholder="Pesquisar cliente..."
+                    className="h-10 w-full rounded-xl border border-slate-300 bg-white pl-9 pr-9 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                  />
+
+                  {busca && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setBusca("")
+                      }
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400 hover:text-slate-700"
+                      aria-label="Limpar pesquisa"
+                    >
+                      ✕
+                    </button>
+                  )}
+
+                </div>
+
               </div>
+
             </div>
+
           </section>
+
+          {/* ================================================= */}
+          {/* NOVO CLIENTE */}
+          {/* ================================================= */}
 
           {formAberto && (
             <form
-              onSubmit={salvarCliente}
-              className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 space-y-4 shadow-sm mb-4 sm:mb-6"
+              onSubmit={
+                salvarCliente
+              }
+              className={`${cardClass} mb-4 overflow-hidden`}
             >
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                  <h2 className="text-base sm:text-lg font-semibold text-slate-800">
-                    Cadastrar cliente
-                  </h2>
 
-                  <p className="text-xs sm:text-sm text-slate-500">
-                    Preencha os dados principais para criar um novo cadastro.
-                  </p>
+              {/* CABEÇALHO FORM */}
+
+              <div className="border-b border-slate-100 p-4 sm:p-5">
+
+                <div className="flex items-start justify-between gap-3">
+
+                  <div>
+
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-indigo-600">
+                      Novo cadastro
+                    </span>
+
+                    <h2 className="mt-1 text-lg font-semibold text-slate-800">
+                      Cadastrar cliente
+                    </h2>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                      Preencha as informações
+                      cadastrais do cliente.
+                    </p>
+
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={
+                      cancelarCadastro
+                    }
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm text-slate-500 transition hover:bg-slate-200"
+                    aria-label="Fechar cadastro"
+                  >
+                    ✕
+                  </button>
+
                 </div>
+
+              </div>
+
+              <div className="space-y-7 p-4 sm:p-5">
+
+                {/* =========================================== */}
+                {/* DADOS PRINCIPAIS */}
+                {/* =========================================== */}
+
+                <section>
+
+                  <div className="mb-4">
+
+                    <h3 className="text-sm font-semibold text-slate-700">
+                      Dados principais
+                    </h3>
+
+                    <p className="mt-1 text-xs text-slate-400">
+                      Identificação e
+                      classificação do cliente.
+                    </p>
+
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-12">
+
+                    {/* NOME */}
+
+                    <div className="sm:col-span-2 xl:col-span-6">
+
+                      <label
+                        className={
+                          labelClass
+                        }
+                      >
+                        Nome ou Razão Social
+                      </label>
+
+                      <input
+                        name="nome"
+                        value={
+                          form.nome
+                        }
+                        onChange={
+                          handleChange
+                        }
+                        required
+                        placeholder="Nome ou Razão Social"
+                        className={
+                          inputClass
+                        }
+                      />
+
+                    </div>
+
+                    {/* TIPO */}
+
+                    <div className="xl:col-span-3">
+
+                      <label
+                        className={
+                          labelClass
+                        }
+                      >
+                        Tipo de cliente
+                      </label>
+
+                      <select
+                        name="tipo_cliente"
+                        value={
+                          form.tipo_cliente
+                        }
+                        onChange={
+                          handleChange
+                        }
+                        className={
+                          inputClass
+                        }
+                      >
+                        <option>
+                          Pessoa Física
+                        </option>
+
+                        <option>
+                          Pessoa Jurídica
+                        </option>
+                      </select>
+
+                    </div>
+
+                    {/* CPF/CNPJ */}
+
+                    <div className="xl:col-span-3">
+
+                      <label
+                        className={
+                          labelClass
+                        }
+                      >
+                        CPF ou CNPJ
+                      </label>
+
+                      <input
+                        name="cpf_cnpj"
+                        value={
+                          form.cpf_cnpj
+                        }
+                        onChange={(e) =>
+                          setForm(
+                            (
+                              formAtual
+                            ) => ({
+                              ...formAtual,
+                              cpf_cnpj:
+                                formatarCpfCnpj(
+                                  e.target
+                                    .value
+                                ),
+                            })
+                          )
+                        }
+                        required
+                        placeholder="CPF ou CNPJ"
+                        inputMode="numeric"
+                        className={
+                          inputClass
+                        }
+                      />
+
+                    </div>
+
+                    {/* INSCRIÇÃO */}
+
+                    <div className="sm:col-span-2 xl:col-span-4">
+
+                      <label
+                        className={
+                          labelClass
+                        }
+                      >
+                        Inscrição Estadual
+                      </label>
+
+                      <input
+                        name="inscricao_estadual"
+                        value={
+                          form.inscricao_estadual
+                        }
+                        onChange={
+                          handleChange
+                        }
+                        placeholder="Inscrição Estadual"
+                        className={
+                          inputClass
+                        }
+                      />
+
+                    </div>
+
+                  </div>
+
+                </section>
+
+                <div className="border-t border-slate-100" />
+
+                {/* =========================================== */}
+                {/* CONTATO */}
+                {/* =========================================== */}
+
+                <section>
+
+                  <div className="mb-4">
+
+                    <h3 className="text-sm font-semibold text-slate-700">
+                      Contato
+                    </h3>
+
+                    <p className="mt-1 text-xs text-slate-400">
+                      Dados para comunicação
+                      com o cliente.
+                    </p>
+
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+
+                    {/* TELEFONE */}
+
+                    <div>
+
+                      <label
+                        className={
+                          labelClass
+                        }
+                      >
+                        Telefone
+                      </label>
+
+                      <input
+                        name="telefone"
+                        value={
+                          form.telefone
+                        }
+                        onChange={(e) =>
+                          setForm(
+                            (
+                              formAtual
+                            ) => ({
+                              ...formAtual,
+                              telefone:
+                                formatarTelefone(
+                                  e.target
+                                    .value
+                                ),
+                            })
+                          )
+                        }
+                        required
+                        inputMode="tel"
+                        placeholder="Telefone"
+                        className={
+                          inputClass
+                        }
+                      />
+
+                    </div>
+
+                    {/* EMAIL */}
+
+                    <div>
+
+                      <label
+                        className={
+                          labelClass
+                        }
+                      >
+                        E-mail
+                      </label>
+
+                      <input
+                        name="email"
+                        type="email"
+                        value={
+                          form.email
+                        }
+                        onChange={
+                          handleChange
+                        }
+                        placeholder="E-mail"
+                        className={
+                          inputClass
+                        }
+                      />
+
+                    </div>
+
+                  </div>
+
+                </section>
+
+                <div className="border-t border-slate-100" />
+
+                {/* =========================================== */}
+                {/* ENDEREÇO */}
+                {/* =========================================== */}
+
+                <section>
+
+                  <div className="mb-4">
+
+                    <h3 className="text-sm font-semibold text-slate-700">
+                      Endereço
+                    </h3>
+
+                    <p className="mt-1 text-xs text-slate-400">
+                      Localização e endereço
+                      cadastral.
+                    </p>
+
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-12">
+
+                    {/* CEP */}
+
+                    <div className="xl:col-span-3">
+
+                      <label
+                        className={
+                          labelClass
+                        }
+                      >
+                        CEP
+                      </label>
+
+                      <input
+                        name="cep"
+                        value={
+                          form.cep
+                        }
+                        onChange={
+                          handleChange
+                        }
+                        inputMode="numeric"
+                        placeholder="CEP"
+                        className={
+                          inputClass
+                        }
+                      />
+
+                    </div>
+
+                    {/* UF */}
+
+                    <div className="xl:col-span-2">
+
+                      <label
+                        className={
+                          labelClass
+                        }
+                      >
+                        UF
+                      </label>
+
+                      <select
+                        name="uf"
+                        value={form.uf}
+                        onChange={
+                          handleChange
+                        }
+                        className={
+                          inputClass
+                        }
+                      >
+
+                        <option value="">
+                          Selecione
+                        </option>
+
+                        {UFS.map(
+                          (uf) => (
+                            <option
+                              key={uf}
+                              value={uf}
+                            >
+                              {uf}
+                            </option>
+                          )
+                        )}
+
+                      </select>
+
+                    </div>
+
+                    {/* CIDADE */}
+
+                    <div className="xl:col-span-4">
+
+                      <label
+                        className={
+                          labelClass
+                        }
+                      >
+                        Cidade
+                      </label>
+
+                      <input
+                        name="cidade"
+                        value={
+                          form.cidade
+                        }
+                        onChange={
+                          handleChange
+                        }
+                        placeholder="Cidade"
+                        className={
+                          inputClass
+                        }
+                      />
+
+                    </div>
+
+                    {/* BAIRRO */}
+
+                    <div className="xl:col-span-3">
+
+                      <label
+                        className={
+                          labelClass
+                        }
+                      >
+                        Bairro
+                      </label>
+
+                      <input
+                        name="bairro"
+                        value={
+                          form.bairro
+                        }
+                        onChange={
+                          handleChange
+                        }
+                        placeholder="Bairro"
+                        className={
+                          inputClass
+                        }
+                      />
+
+                    </div>
+
+                    {/* ENDEREÇO */}
+
+                    <div className="sm:col-span-2 xl:col-span-7">
+
+                      <label
+                        className={
+                          labelClass
+                        }
+                      >
+                        Endereço / Rua
+                      </label>
+
+                      <input
+                        name="endereco"
+                        value={
+                          form.endereco
+                        }
+                        onChange={
+                          handleChange
+                        }
+                        required
+                        placeholder="Endereço / Rua"
+                        className={
+                          inputClass
+                        }
+                      />
+
+                    </div>
+
+                    {/* NUMERO */}
+
+                    <div className="xl:col-span-2">
+
+                      <label
+                        className={
+                          labelClass
+                        }
+                      >
+                        Número
+                      </label>
+
+                      <input
+                        name="numero"
+                        value={
+                          form.numero
+                        }
+                        onChange={
+                          handleChange
+                        }
+                        placeholder="Número"
+                        className={
+                          inputClass
+                        }
+                      />
+
+                    </div>
+
+                    {/* COMPLEMENTO */}
+
+                    <div className="xl:col-span-3">
+
+                      <label
+                        className={
+                          labelClass
+                        }
+                      >
+                        Complemento
+                      </label>
+
+                      <input
+                        name="complemento"
+                        value={
+                          form.complemento
+                        }
+                        onChange={
+                          handleChange
+                        }
+                        placeholder="Complemento"
+                        className={
+                          inputClass
+                        }
+                      />
+
+                    </div>
+
+                  </div>
+
+                </section>
+
+              </div>
+
+              {/* RODAPÉ FORM */}
+
+              <div className="flex flex-col-reverse gap-2 border-t border-slate-100 bg-slate-50/50 p-4 sm:flex-row sm:justify-end sm:p-5">
 
                 <button
                   type="button"
-                  onClick={() => {
-                    limparFormulario()
-                    setFormAberto(false)
-                  }}
-                  className="text-sm text-slate-500 hover:text-slate-700"
-                >
-                  Cancelar
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                <div className="md:col-span-2 xl:col-span-2">
-                  <label className="block text-xs font-medium text-slate-500 mb-1">
-                    Nome ou Razão Social
-                  </label>
-
-                  <input
-                    name="nome"
-                    value={form.nome}
-                    onChange={handleChange}
-                    placeholder="Nome ou Razão Social"
-                    required
-                    className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">
-                    Tipo de Cliente
-                  </label>
-
-                  <select
-                    name="tipo_cliente"
-                    value={form.tipo_cliente}
-                    onChange={handleChange}
-                    className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                  >
-                    <option>Pessoa Física</option>
-                    <option>Pessoa Jurídica</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">
-                    CPF ou CNPJ
-                  </label>
-
-                  <input
-                    name="cpf_cnpj"
-                    value={form.cpf_cnpj}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        cpf_cnpj: formatarCpfCnpj(e.target.value),
-                      })
-                    }
-                    placeholder="CPF ou CNPJ"
-                    required
-                    className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">
-                    Telefone
-                  </label>
-
-                  <input
-                    name="telefone"
-                    value={form.telefone}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        telefone: formatarTelefone(e.target.value),
-                      })
-                    }
-                    placeholder="Telefone"
-                    required
-                    className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">
-                    E-mail
-                  </label>
-
-                  <input
-                    name="email"
-                    type="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    placeholder="E-mail"
-                    className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">
-                    CEP
-                  </label>
-
-                  <input
-                    name="cep"
-                    value={form.cep}
-                    onChange={handleChange}
-                    placeholder="CEP"
-                    className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">
-                    UF
-                  </label>
-
-                  <select
-                    name="uf"
-                    value={form.uf}
-                    onChange={handleChange}
-                    className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                  >
-                    <option value="">UF</option>
-                    <option value="AC">AC</option>
-                    <option value="AL">AL</option>
-                    <option value="AP">AP</option>
-                    <option value="AM">AM</option>
-                    <option value="BA">BA</option>
-                    <option value="CE">CE</option>
-                    <option value="DF">DF</option>
-                    <option value="ES">ES</option>
-                    <option value="GO">GO</option>
-                    <option value="MA">MA</option>
-                    <option value="MT">MT</option>
-                    <option value="MS">MS</option>
-                    <option value="MG">MG</option>
-                    <option value="PA">PA</option>
-                    <option value="PB">PB</option>
-                    <option value="PR">PR</option>
-                    <option value="PE">PE</option>
-                    <option value="PI">PI</option>
-                    <option value="RJ">RJ</option>
-                    <option value="RN">RN</option>
-                    <option value="RS">RS</option>
-                    <option value="RO">RO</option>
-                    <option value="RR">RR</option>
-                    <option value="SC">SC</option>
-                    <option value="SP">SP</option>
-                    <option value="SE">SE</option>
-                    <option value="TO">TO</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">
-                    Cidade
-                  </label>
-
-                  <input
-                    name="cidade"
-                    value={form.cidade}
-                    onChange={handleChange}
-                    placeholder="Cidade"
-                    className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">
-                    Bairro
-                  </label>
-
-                  <input
-                    name="bairro"
-                    value={form.bairro}
-                    onChange={handleChange}
-                    placeholder="Bairro"
-                    className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-medium text-slate-500 mb-1">
-                    Endereço / Rua
-                  </label>
-
-                  <input
-                    name="endereco"
-                    value={form.endereco}
-                    onChange={handleChange}
-                    placeholder="Endereço / Rua"
-                    required
-                    className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">
-                    Número
-                  </label>
-
-                  <input
-                    name="numero"
-                    value={form.numero}
-                    onChange={handleChange}
-                    placeholder="Número"
-                    className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">
-                    Complemento
-                  </label>
-
-                  <input
-                    name="complemento"
-                    value={form.complemento}
-                    onChange={handleChange}
-                    placeholder="Complemento"
-                    className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">
-                    Inscrição Estadual
-                  </label>
-
-                  <input
-                    name="inscricao_estadual"
-                    value={form.inscricao_estadual}
-                    onChange={handleChange}
-                    placeholder="Inscrição Estadual"
-                    className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    limparFormulario()
-                    setFormAberto(false)
-                  }}
-                  className="w-full sm:w-auto px-4 py-2.5 rounded-lg border border-slate-300 text-slate-600 text-sm font-medium hover:bg-slate-50"
+                  onClick={
+                    cancelarCadastro
+                  }
+                  className="h-10 w-full rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium text-slate-600 transition hover:bg-slate-50 sm:w-auto"
                 >
                   Cancelar
                 </button>
 
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-medium shadow-sm"
+                  disabled={salvando}
+                  className="h-10 w-full rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                 >
-                  {loading ? "Salvando..." : "Salvar cliente"}
+                  {salvando
+                    ? "Salvando..."
+                    : "Salvar cliente"}
                 </button>
+
               </div>
+
             </form>
           )}
 
-          <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm min-w-0">
-            {clientesFiltrados.length === 0 ? (
-              <div className="py-8 text-center">
-                <p className="text-sm font-medium text-slate-700">
-                  Nenhum cliente encontrado.
-                </p>
+          {/* ================================================= */}
+          {/* LISTA */}
+          {/* ================================================= */}
 
-                <p className="text-xs text-slate-500 mt-1">
-                  Tente pesquisar por outro nome, documento ou cidade.
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                {clientesFiltrados.map((cliente) => (
-                  <article
-                    key={cliente.id}
-                    className="rounded-xl border border-slate-200 p-3 sm:p-4 hover:border-indigo-200 hover:bg-slate-50 transition"
+          <section
+            className={`${cardClass} min-w-0 p-4 sm:p-5`}
+          >
+
+            {carregandoClientes ? (
+
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+
+                {Array.from({
+                  length: 6,
+                }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="animate-pulse rounded-2xl border border-slate-100 p-4"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3 min-w-0">
-                        <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 text-base">
-                          {cliente.tipo_cliente === "Pessoa Jurídica"
-                            ? "🏢"
-                            : "👤"}
-                        </div>
+                    <div className="h-4 w-2/3 rounded bg-slate-200" />
 
-                        <div className="min-w-0">
-                          <h3 className="text-sm font-semibold text-slate-800 leading-snug break-words">
-                            {cliente.nome}
-                          </h3>
+                    <div className="mt-3 h-3 w-1/2 rounded bg-slate-100" />
 
-                          <p className="text-xs text-slate-500 mt-1 break-words">
-                            {cliente.cpf_cnpj || "CPF/CNPJ não informado"}
-                          </p>
-                        </div>
-                      </div>
-
-                      <span
-                        className={`shrink-0 px-2 py-1 text-[10px] rounded-full font-medium ${
-                          cliente.tipo_cliente === "Pessoa Jurídica"
-                            ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
-                            : "bg-green-50 text-green-700 border border-green-100"
-                        }`}
-                      >
-                        {cliente.tipo_cliente === "Pessoa Jurídica" ? "PJ" : "PF"}
-                      </span>
+                    <div className="mt-6 grid grid-cols-2 gap-2">
+                      <div className="h-8 rounded bg-slate-100" />
+                      <div className="h-8 rounded bg-slate-100" />
                     </div>
-
-                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-500">
-                      <p className="truncate">
-                        Tel:{" "}
-                        <span className="text-slate-700">
-                          {cliente.telefone || "Não informado"}
-                        </span>
-                      </p>
-
-                      <p className="truncate">
-                        Cidade:{" "}
-                        <span className="text-slate-700">
-                          {cliente.cidade
-                            ? `${cliente.cidade}${cliente.uf ? `/${cliente.uf}` : ""}`
-                            : "Não informada"}
-                        </span>
-                      </p>
-                    </div>
-
-                    {cliente.email && (
-                      <p className="mt-2 text-xs text-slate-500 truncate">
-                        E-mail:{" "}
-                        <span className="text-slate-700">{cliente.email}</span>
-                      </p>
-                    )}
-
-                    <div className="mt-4 flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/clientes/${cliente.id}`)}
-                        className="flex-1 px-3 py-2 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 text-xs font-medium hover:bg-indigo-100"
-                      >
-                        Detalhes
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => excluirCliente(cliente.id)}
-                        className="flex-1 px-3 py-2 rounded-lg border border-red-200 bg-red-50 text-red-600 text-xs font-medium hover:bg-red-100"
-                      >
-                        Excluir
-                      </button>
-                    </div>
-                  </article>
+                  </div>
                 ))}
+
+              </div>
+
+            ) : clientesFiltrados.length === 0 ? (
+
+              <div className="py-12 text-center">
+
+                <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-500">
+                  CL
+                </div>
+
+                <p className="mt-4 text-sm font-semibold text-slate-700">
+                  Nenhum cliente encontrado
+                </p>
+
+                <p className="mx-auto mt-1 max-w-sm text-xs leading-5 text-slate-400">
+                  {busca
+                    ? "Tente pesquisar por outro nome, documento, telefone ou cidade."
+                    : "Cadastre o primeiro cliente para começar a utilizar o sistema."}
+                </p>
+
+              </div>
+
+            ) : (
+
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+
+                {clientesFiltrados.map(
+                  (cliente) => {
+                    const pessoaJuridica =
+                      cliente.tipo_cliente ===
+                      "Pessoa Jurídica"
+
+                    return (
+                      <article
+                        key={
+                          cliente.id
+                        }
+                        className="group rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-indigo-200 hover:shadow-sm"
+                      >
+
+                        {/* CABEÇALHO */}
+
+                        <div className="flex items-start justify-between gap-3">
+
+                          <div className="flex min-w-0 items-start gap-3">
+
+                            <div
+                              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-bold ${
+                                pessoaJuridica
+                                  ? "bg-indigo-50 text-indigo-700"
+                                  : "bg-emerald-50 text-emerald-700"
+                              }`}
+                            >
+                              {pessoaJuridica
+                                ? "PJ"
+                                : "PF"}
+                            </div>
+
+                            <div className="min-w-0">
+
+                              <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-slate-800">
+                                {
+                                  cliente.nome
+                                }
+                              </h3>
+
+                              <p className="mt-1 text-xs text-slate-500">
+                                {cliente.cpf_cnpj ||
+                                  "Documento não informado"}
+                              </p>
+
+                            </div>
+
+                          </div>
+
+                          <span
+                            className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-medium ${
+                              pessoaJuridica
+                                ? "border-indigo-100 bg-indigo-50 text-indigo-700"
+                                : "border-emerald-100 bg-emerald-50 text-emerald-700"
+                            }`}
+                          >
+                            {pessoaJuridica
+                              ? "Jurídica"
+                              : "Física"}
+                          </span>
+
+                        </div>
+
+                        {/* DADOS */}
+
+                        <div className="mt-4 space-y-2 border-t border-slate-100 pt-4">
+
+                          <div className="flex items-start justify-between gap-3 text-xs">
+
+                            <span className="shrink-0 text-slate-400">
+                              Telefone
+                            </span>
+
+                            <span className="truncate text-right font-medium text-slate-600">
+                              {cliente.telefone ||
+                                "Não informado"}
+                            </span>
+
+                          </div>
+
+                          <div className="flex items-start justify-between gap-3 text-xs">
+
+                            <span className="shrink-0 text-slate-400">
+                              Cidade
+                            </span>
+
+                            <span className="truncate text-right font-medium text-slate-600">
+                              {cliente.cidade
+                                ? `${cliente.cidade}${
+                                    cliente.uf
+                                      ? `/${cliente.uf}`
+                                      : ""
+                                  }`
+                                : "Não informada"}
+                            </span>
+
+                          </div>
+
+                          <div className="flex items-start justify-between gap-3 text-xs">
+
+                            <span className="shrink-0 text-slate-400">
+                              E-mail
+                            </span>
+
+                            <span className="truncate text-right font-medium text-slate-600">
+                              {cliente.email ||
+                                "Não informado"}
+                            </span>
+
+                          </div>
+
+                        </div>
+
+                        {/* AÇÕES */}
+
+                        <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              navigate(
+                                `/clientes/${cliente.id}`
+                              )
+                            }
+                            className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2.5 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-100"
+                          >
+                            Ver detalhes
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={
+                              excluindoId ===
+                              cliente.id
+                            }
+                            onClick={() =>
+                              excluirCliente(
+                                cliente.id
+                              )
+                            }
+                            className="rounded-xl border border-red-100 bg-red-50 px-3 py-2.5 text-xs font-medium text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                            aria-label="Excluir cliente"
+                          >
+                            {excluindoId ===
+                            cliente.id
+                              ? "..."
+                              : "Excluir"}
+                          </button>
+
+                        </div>
+
+                      </article>
+                    )
+                  }
+                )}
+
               </div>
             )}
+
           </section>
+
         </div>
       </div>
     </>
