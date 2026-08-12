@@ -3,11 +3,26 @@ import Sidebar from "../components/Sidebar"
 import { supabase } from "../services/supabase"
 
 export default function Agenda() {
-  const [menuAberto, setMenuAberto] = useState(false)
-  const [viagens, setViagens] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [mesAtual, setMesAtual] = useState(new Date())
-  const [diaSelecionado, setDiaSelecionado] = useState(new Date())
+  const [menuAberto, setMenuAberto] =
+    useState(false)
+
+  const [viagens, setViagens] =
+    useState([])
+
+  const [loading, setLoading] =
+    useState(true)
+
+  const [mesAtual, setMesAtual] =
+    useState(new Date())
+
+  const [
+    diaSelecionado,
+    setDiaSelecionado,
+  ] = useState(new Date())
+
+  // =========================================================
+  // CARREGAR AGENDA
+  // =========================================================
 
   useEffect(() => {
     carregarAgenda()
@@ -16,394 +31,1021 @@ export default function Agenda() {
   async function carregarAgenda() {
     setLoading(true)
 
-    const { data, error } = await supabase
-      .from("reservas")
-      .select(`
-        *,
-        clientes (
-          nome,
-          cpf_cnpj
-        )
-      `)
-      .order("data_saida", { ascending: true })
+    try {
+      const { data, error } =
+        await supabase
+          .from("reservas")
+          .select(`
+            *,
+            clientes (
+              nome,
+              cpf_cnpj
+            )
+          `)
+          .order("data_saida", {
+            ascending: true,
+          })
 
-    setLoading(false)
+      if (error) {
+        throw error
+      }
 
-    if (error) {
-      console.error(error)
+      setViagens(data || [])
+    } catch (error) {
+      console.error(
+        "Erro ao carregar agenda:",
+        error
+      )
+
       alert("Erro ao carregar agenda.")
-      return
+    } finally {
+      setLoading(false)
     }
-
-    setViagens(data || [])
   }
 
+  // =========================================================
+  // FORMATAÇÃO
+  // =========================================================
+
   function formatarMoeda(valor) {
-    return Number(valor || 0).toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    })
+    return Number(valor || 0).toLocaleString(
+      "pt-BR",
+      {
+        style: "currency",
+        currency: "BRL",
+      }
+    )
   }
 
   function formatarData(data) {
     if (!data) return "-"
-    return new Date(data).toLocaleDateString("pt-BR")
+
+    return new Date(
+      data
+    ).toLocaleDateString("pt-BR")
   }
 
   function formatarHora(data) {
     if (!data) return "-"
 
-    return new Date(data).toLocaleTimeString("pt-BR", {
+    return new Date(
+      data
+    ).toLocaleTimeString("pt-BR", {
       hour: "2-digit",
       minute: "2-digit",
     })
   }
 
-  function chaveData(data) {
-    return new Date(data).toISOString().slice(0, 10)
+  // =========================================================
+  // DATA LOCAL
+  // Evita problema de UTC / alteração de dia
+  // =========================================================
+
+  function dataLocalInput(data) {
+    const dataConvertida =
+      data instanceof Date
+        ? data
+        : new Date(data)
+
+    const ano =
+      dataConvertida.getFullYear()
+
+    const mes = String(
+      dataConvertida.getMonth() + 1
+    ).padStart(2, "0")
+
+    const dia = String(
+      dataConvertida.getDate()
+    ).padStart(2, "0")
+
+    return `${ano}-${mes}-${dia}`
   }
 
-  function gerarDiasViagem(dataInicio, dataFim) {
+  // =========================================================
+  // DIAS DA VIAGEM
+  // =========================================================
+
+  function gerarDiasViagem(
+    dataInicio,
+    dataFim
+  ) {
     if (!dataInicio) return []
 
-    const inicio = new Date(dataInicio)
-    const fim = dataFim ? new Date(dataFim) : new Date(dataInicio)
+    const inicio =
+      new Date(dataInicio)
+
+    const fim = dataFim
+      ? new Date(dataFim)
+      : new Date(dataInicio)
 
     inicio.setHours(0, 0, 0, 0)
     fim.setHours(0, 0, 0, 0)
 
     const dias = []
-    const atual = new Date(inicio)
+
+    const atual =
+      new Date(inicio)
 
     while (atual <= fim) {
-      dias.push(chaveData(atual))
-      atual.setDate(atual.getDate() + 1)
+      dias.push(
+        dataLocalInput(atual)
+      )
+
+      atual.setDate(
+        atual.getDate() + 1
+      )
     }
 
     return dias
   }
 
-  function dataLocalInput(data) {
-    const ano = data.getFullYear()
-    const mes = String(data.getMonth() + 1).padStart(2, "0")
-    const dia = String(data.getDate()).padStart(2, "0")
-
-    return `${ano}-${mes}-${dia}`
-  }
+  // =========================================================
+  // NAVEGAÇÃO
+  // =========================================================
 
   function irMesAnterior() {
-    setMesAtual(
-      new Date(mesAtual.getFullYear(), mesAtual.getMonth() - 1, 1)
+    const novoMes = new Date(
+      mesAtual.getFullYear(),
+      mesAtual.getMonth() - 1,
+      1
     )
+
+    setMesAtual(novoMes)
+    setDiaSelecionado(novoMes)
   }
 
   function irProximoMes() {
-    setMesAtual(
-      new Date(mesAtual.getFullYear(), mesAtual.getMonth() + 1, 1)
+    const novoMes = new Date(
+      mesAtual.getFullYear(),
+      mesAtual.getMonth() + 1,
+      1
     )
+
+    setMesAtual(novoMes)
+    setDiaSelecionado(novoMes)
+  }
+
+  function irParaHoje() {
+    const hoje = new Date()
+
+    setMesAtual(
+      new Date(
+        hoje.getFullYear(),
+        hoje.getMonth(),
+        1
+      )
+    )
+
+    setDiaSelecionado(hoje)
   }
 
   function buscarPorData(e) {
-    const valor = e.target.value
+    const valor =
+      e.target.value
+
     if (!valor) return
 
-    const [ano, mes, dia] = valor.split("-").map(Number)
-    const novaData = new Date(ano, mes - 1, dia)
+    const [ano, mes, dia] =
+      valor
+        .split("-")
+        .map(Number)
 
-    setMesAtual(new Date(ano, mes - 1, 1))
-    setDiaSelecionado(novaData)
+    const novaData = new Date(
+      ano,
+      mes - 1,
+      dia
+    )
+
+    setMesAtual(
+      new Date(
+        ano,
+        mes - 1,
+        1
+      )
+    )
+
+    setDiaSelecionado(
+      novaData
+    )
   }
 
-  const viagensPorDia = useMemo(() => {
-    const agrupado = {}
+  // =========================================================
+  // VIAGENS AGRUPADAS POR DIA
+  // =========================================================
 
-    viagens.forEach((viagem) => {
-      const dias = gerarDiasViagem(
-        viagem.data_saida,
-        viagem.data_retorno
+  const viagensPorDia =
+    useMemo(() => {
+      const agrupado = {}
+
+      viagens.forEach(
+        (viagem) => {
+          const dias =
+            gerarDiasViagem(
+              viagem.data_saida,
+              viagem.data_retorno
+            )
+
+          dias.forEach((dia) => {
+            if (!agrupado[dia]) {
+              agrupado[dia] = []
+            }
+
+            agrupado[dia].push(
+              viagem
+            )
+          })
+        }
       )
 
-      dias.forEach((dia) => {
-        if (!agrupado[dia]) {
-          agrupado[dia] = []
+      return agrupado
+    }, [viagens])
+
+  // =========================================================
+  // DIAS DO CALENDÁRIO
+  // =========================================================
+
+  const diasDoCalendario =
+    useMemo(() => {
+      const ano =
+        mesAtual.getFullYear()
+
+      const mes =
+        mesAtual.getMonth()
+
+      const primeiroDiaMes =
+        new Date(
+          ano,
+          mes,
+          1
+        )
+
+      const ultimoDiaMes =
+        new Date(
+          ano,
+          mes + 1,
+          0
+        )
+
+      const inicioCalendario =
+        new Date(
+          primeiroDiaMes
+        )
+
+      inicioCalendario.setDate(
+        primeiroDiaMes.getDate() -
+          primeiroDiaMes.getDay()
+      )
+
+      const fimCalendario =
+        new Date(
+          ultimoDiaMes
+        )
+
+      fimCalendario.setDate(
+        ultimoDiaMes.getDate() +
+          (6 -
+            ultimoDiaMes.getDay())
+      )
+
+      const dias = []
+
+      const data =
+        new Date(
+          inicioCalendario
+        )
+
+      while (
+        data <=
+        fimCalendario
+      ) {
+        dias.push(
+          new Date(data)
+        )
+
+        data.setDate(
+          data.getDate() + 1
+        )
+      }
+
+      return dias
+    }, [mesAtual])
+
+  // =========================================================
+  // VIAGENS DO DIA SELECIONADO
+  // =========================================================
+
+  const viagensDoDiaSelecionado =
+    useMemo(() => {
+      const chave =
+        dataLocalInput(
+          diaSelecionado
+        )
+
+      return (
+        viagensPorDia[chave] ||
+        []
+      )
+    }, [
+      diaSelecionado,
+      viagensPorDia,
+    ])
+
+  // =========================================================
+  // QUANTIDADE NO MÊS
+  // =========================================================
+
+  const quantidadeViagensMes =
+    useMemo(() => {
+      const ano =
+        mesAtual.getFullYear()
+
+      const mes =
+        mesAtual.getMonth()
+
+      return viagens.filter(
+        (viagem) => {
+          if (
+            !viagem.data_saida
+          ) {
+            return false
+          }
+
+          const data =
+            new Date(
+              viagem.data_saida
+            )
+
+          return (
+            data.getFullYear() ===
+              ano &&
+            data.getMonth() ===
+              mes
+          )
         }
+      ).length
+    }, [viagens, mesAtual])
 
-        agrupado[dia].push(viagem)
-      })
-    })
-
-    return agrupado
-  }, [viagens])
-
-  const diasDoCalendario = useMemo(() => {
-    const ano = mesAtual.getFullYear()
-    const mes = mesAtual.getMonth()
-
-    const primeiroDiaMes = new Date(ano, mes, 1)
-    const ultimoDiaMes = new Date(ano, mes + 1, 0)
-
-    const inicioCalendario = new Date(primeiroDiaMes)
-    inicioCalendario.setDate(
-      primeiroDiaMes.getDate() - primeiroDiaMes.getDay()
-    )
-
-    const fimCalendario = new Date(ultimoDiaMes)
-    fimCalendario.setDate(
-      ultimoDiaMes.getDate() + (6 - ultimoDiaMes.getDay())
-    )
-
-    const dias = []
-    const data = new Date(inicioCalendario)
-
-    while (data <= fimCalendario) {
-      dias.push(new Date(data))
-      data.setDate(data.getDate() + 1)
-    }
-
-    return dias
-  }, [mesAtual])
-
-  const viagensDoDiaSelecionado = useMemo(() => {
-    const chave = dataLocalInput(diaSelecionado)
-    return viagensPorDia[chave] || []
-  }, [diaSelecionado, viagensPorDia])
+  // =========================================================
+  // STATUS
+  // =========================================================
 
   function corStatus(status) {
     switch (status) {
       case "Reservada":
-        return "bg-yellow-100 text-yellow-700"
+        return "border border-amber-100 bg-amber-50 text-amber-700"
+
       case "Sinal pago":
-        return "bg-orange-100 text-orange-700"
+        return "border border-orange-100 bg-orange-50 text-orange-700"
+
+      case "Quitado":
+        return "border border-green-100 bg-green-50 text-green-700"
+
       case "Confirmada":
-        return "bg-indigo-100 text-indigo-700"
+        return "border border-indigo-100 bg-indigo-50 text-indigo-700"
+
       case "Em andamento":
-        return "bg-green-100 text-green-700"
+        return "border border-emerald-100 bg-emerald-50 text-emerald-700"
+
       case "Finalizada":
-        return "bg-slate-200 text-slate-700"
+        return "border border-slate-200 bg-slate-100 text-slate-700"
+
       case "Cancelada":
-        return "bg-red-100 text-red-700"
+        return "border border-red-100 bg-red-50 text-red-700"
+
       default:
-        return "bg-slate-100 text-slate-600"
+        return "border border-slate-200 bg-slate-50 text-slate-600"
     }
   }
 
+  // =========================================================
+  // VARIÁVEIS VISUAIS
+  // =========================================================
+
+  const hoje =
+    dataLocalInput(
+      new Date()
+    )
+
+  const chaveSelecionada =
+    dataLocalInput(
+      diaSelecionado
+    )
+
+  const nomeMes =
+    mesAtual.toLocaleDateString(
+      "pt-BR",
+      {
+        month: "long",
+        year: "numeric",
+      }
+    )
+
+  // =========================================================
+  // TELA
+  // =========================================================
+
   return (
     <>
-      <Sidebar aberto={menuAberto} onClose={() => setMenuAberto(false)} />
+      <Sidebar
+        aberto={menuAberto}
+        onClose={() =>
+          setMenuAberto(false)
+        }
+      />
 
       {menuAberto && (
         <div
-          onClick={() => setMenuAberto(false)}
-          className="fixed inset-0 bg-black/40 z-40"
+          onClick={() =>
+            setMenuAberto(false)
+          }
+          className="fixed inset-0 z-40 bg-black/40"
         />
       )}
 
-      <div className="min-h-screen bg-slate-100 p-4 md:p-6">
-        <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6 md:mb-8">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setMenuAberto(true)}
-              className="text-slate-700 text-2xl hover:text-indigo-700"
-            >
-              ☰
-            </button>
+      <div className="min-h-screen bg-slate-100 px-3 py-4 sm:px-4 md:p-6">
 
-            <div>
-              <h1 className="text-2xl md:text-3xl font-semibold text-slate-800">
-                Agenda
-              </h1>
+        <div className="mx-auto max-w-[1500px]">
 
-              <p className="text-sm text-slate-500">
-                Calendário mensal de viagens
-              </p>
+          {/* ================================================= */}
+          {/* CABEÇALHO */}
+          {/* ================================================= */}
+
+          <header className="mb-5">
+
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+
+              <div className="flex items-start gap-3">
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMenuAberto(
+                      true
+                    )
+                  }
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-2xl text-slate-700 shadow-sm transition hover:border-indigo-200 hover:text-indigo-700"
+                  aria-label="Abrir menu"
+                >
+                  ☰
+                </button>
+
+                <div>
+
+                  <h1 className="text-xl font-semibold text-slate-800 sm:text-2xl">
+                    Agenda
+                  </h1>
+
+                  <p className="mt-0.5 text-xs text-slate-500 sm:text-sm">
+                    Calendário mensal
+                    de viagens
+                  </p>
+
+                </div>
+
+              </div>
+
+              {/* AÇÕES */}
+
+              <div className="flex flex-col gap-2 sm:flex-row">
+
+                <button
+                  type="button"
+                  onClick={
+                    irParaHoje
+                  }
+                  className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 shadow-sm transition hover:border-indigo-200 hover:text-indigo-700"
+                >
+                  Hoje
+                </button>
+
+                <input
+                  type="date"
+                  value={
+                    chaveSelecionada
+                  }
+                  onChange={
+                    buscarPorData
+                  }
+                  className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 sm:w-auto"
+                />
+
+              </div>
+
             </div>
-          </div>
 
-          <input
-            type="date"
-            value={dataLocalInput(diaSelecionado)}
-            onChange={buscarPorData}
-            className="w-full md:w-auto rounded-lg border border-slate-300 px-4 py-2 text-sm"
-          />
-        </header>
+          </header>
 
-        {loading ? (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6">
-            <p className="text-sm text-slate-500">Carregando agenda...</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <section className="xl:col-span-2 bg-white rounded-2xl border border-slate-200 p-3 md:p-6 overflow-hidden">
-              <div className="flex items-center justify-between gap-2 mb-4 md:mb-6">
-                <button
-                  onClick={irMesAnterior}
-                  className="text-xs md:text-sm text-slate-600 hover:text-indigo-700 whitespace-nowrap"
-                >
-                  ← <span className="hidden sm:inline">Mês anterior</span>
-                </button>
+          {/* ================================================= */}
+          {/* CARREGAMENTO */}
+          {/* ================================================= */}
 
-                <h2 className="text-base md:text-lg font-semibold text-slate-800 capitalize text-center">
-                  {mesAtual.toLocaleDateString("pt-BR", {
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </h2>
+          {loading ? (
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
 
-                <button
-                  onClick={irProximoMes}
-                  className="text-xs md:text-sm text-slate-600 hover:text-indigo-700 whitespace-nowrap"
-                >
-                  <span className="hidden sm:inline">Próximo mês</span> →
-                </button>
+              <div className="animate-pulse">
+
+                <div className="h-5 w-40 rounded bg-slate-200" />
+
+                <div className="mt-3 h-3 w-64 max-w-full rounded bg-slate-100" />
+
+                <div className="mt-6 grid grid-cols-7 gap-2">
+
+                  {Array.from({
+                    length: 35,
+                  }).map((_, index) => (
+                    <div
+                      key={
+                        index
+                      }
+                      className="h-16 rounded-xl bg-slate-100"
+                    />
+                  ))}
+
+                </div>
+
               </div>
 
-              <div className="grid grid-cols-7 gap-1 md:gap-2 mb-2 text-center text-[10px] md:text-xs font-medium text-slate-500">
-                <div>Dom</div>
-                <div>Seg</div>
-                <div>Ter</div>
-                <div>Qua</div>
-                <div>Qui</div>
-                <div>Sex</div>
-                <div>Sáb</div>
-              </div>
+            </div>
+          ) : (
 
-              <div className="grid grid-cols-7 gap-1 md:gap-2">
-                {diasDoCalendario.map((dia) => {
-                  const chave = dataLocalInput(dia)
-                  const viagensDia = viagensPorDia[chave] || []
-                  const foraDoMes =
-                    dia.getMonth() !== mesAtual.getMonth()
-                  const selecionado =
-                    chave === dataLocalInput(diaSelecionado)
+            <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
 
-                  return (
-                    <button
-                      key={chave}
-                      onClick={() => setDiaSelecionado(dia)}
-                      className={`
-                        min-h-[56px]
-                        md:min-h-24
-                        rounded-lg
-                        md:rounded-xl
-                        border
-                        p-1
-                        md:p-2
-                        text-left
-                        transition
-                        overflow-hidden
-                        ${
-                          selecionado
-                            ? "border-indigo-600 bg-indigo-50"
-                            : "border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                        }
-                        ${
-                          foraDoMes
-                            ? "opacity-40"
-                            : "opacity-100"
-                        }
-                      `}
-                    >
-                      <p className="text-xs md:text-sm font-medium text-slate-700">
-                        {dia.getDate()}
+              {/* ============================================= */}
+              {/* CALENDÁRIO */}
+              {/* ============================================= */}
+
+              <section className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm sm:p-5">
+
+                {/* CABEÇALHO DO CALENDÁRIO */}
+
+                <div className="mb-5 flex items-center justify-between gap-2">
+
+                  <button
+                    type="button"
+                    onClick={
+                      irMesAnterior
+                    }
+                    className="flex h-9 items-center justify-center rounded-xl border border-slate-200 px-3 text-sm font-medium text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+                    aria-label="Mês anterior"
+                  >
+                    ←
+                    <span className="ml-2 hidden sm:inline">
+                      Anterior
+                    </span>
+                  </button>
+
+                  <div className="min-w-0 text-center">
+
+                    <h2 className="truncate text-base font-semibold capitalize text-slate-800 sm:text-lg">
+                      {nomeMes}
+                    </h2>
+
+                    <p className="mt-0.5 text-[11px] text-slate-400">
+                      {
+                        quantidadeViagensMes
+                      }{" "}
+                      viagem(ns) com
+                      saída neste mês
+                    </p>
+
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={
+                      irProximoMes
+                    }
+                    className="flex h-9 items-center justify-center rounded-xl border border-slate-200 px-3 text-sm font-medium text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+                    aria-label="Próximo mês"
+                  >
+                    <span className="mr-2 hidden sm:inline">
+                      Próximo
+                    </span>
+                    →
+                  </button>
+
+                </div>
+
+                {/* DIAS DA SEMANA */}
+
+                <div className="mb-2 grid grid-cols-7 gap-1 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-400 sm:gap-2 sm:text-xs">
+
+                  <div>Dom</div>
+                  <div>Seg</div>
+                  <div>Ter</div>
+                  <div>Qua</div>
+                  <div>Qui</div>
+                  <div>Sex</div>
+                  <div>Sáb</div>
+
+                </div>
+
+                {/* DIAS */}
+
+                <div className="grid grid-cols-7 gap-1 sm:gap-2">
+
+                  {diasDoCalendario.map(
+                    (dia) => {
+                      const chave =
+                        dataLocalInput(
+                          dia
+                        )
+
+                      const viagensDia =
+                        viagensPorDia[
+                          chave
+                        ] || []
+
+                      const foraDoMes =
+                        dia.getMonth() !==
+                        mesAtual.getMonth()
+
+                      const selecionado =
+                        chave ===
+                        chaveSelecionada
+
+                      const diaAtual =
+                        chave === hoje
+
+                      return (
+                        <button
+                          key={chave}
+                          type="button"
+                          onClick={() =>
+                            setDiaSelecionado(
+                              dia
+                            )
+                          }
+                          className={`
+                            relative
+                            min-h-[58px]
+                            overflow-hidden
+                            rounded-xl
+                            border
+                            p-1.5
+                            text-left
+                            transition
+                            sm:min-h-[88px]
+                            sm:p-2.5
+                            ${
+                              selecionado
+                                ? "border-indigo-500 bg-indigo-50 ring-1 ring-indigo-100"
+                                : "border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50"
+                            }
+                            ${
+                              foraDoMes
+                                ? "opacity-35"
+                                : "opacity-100"
+                            }
+                          `}
+                        >
+
+                          {/* NÚMERO */}
+
+                          <div className="flex items-start justify-between gap-1">
+
+                            <span
+                              className={`
+                                flex
+                                h-6
+                                min-w-6
+                                items-center
+                                justify-center
+                                rounded-lg
+                                px-1
+                                text-xs
+                                font-semibold
+                                sm:text-sm
+                                ${
+                                  diaAtual
+                                    ? "bg-indigo-600 text-white"
+                                    : selecionado
+                                      ? "text-indigo-700"
+                                      : "text-slate-700"
+                                }
+                              `}
+                            >
+                              {dia.getDate()}
+                            </span>
+
+                          </div>
+
+                          {/* VIAGENS */}
+
+                          {viagensDia.length >
+                            0 && (
+                            <>
+                              {/* MOBILE */}
+
+                              <div className="mt-1.5 flex sm:hidden">
+
+                                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-indigo-100 px-1 text-[10px] font-bold text-indigo-700">
+                                  {
+                                    viagensDia.length
+                                  }
+                                </span>
+
+                              </div>
+
+                              {/* DESKTOP */}
+
+                              <div className="mt-3 hidden sm:block">
+
+                                <div className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-2 py-1 text-[11px] font-medium text-indigo-700">
+
+                                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+
+                                  {
+                                    viagensDia.length
+                                  }{" "}
+                                  {viagensDia.length ===
+                                  1
+                                    ? "viagem"
+                                    : "viagens"}
+
+                                </div>
+
+                              </div>
+                            </>
+                          )}
+
+                        </button>
+                      )
+                    }
+                  )}
+
+                </div>
+
+                {/* LEGENDA */}
+
+                <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-slate-100 pt-4 text-[11px] text-slate-400">
+
+                  <div className="flex items-center gap-1.5">
+
+                    <span className="h-2 w-2 rounded-full bg-indigo-600" />
+
+                    Hoje
+
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+
+                    <span className="h-2 w-2 rounded-full bg-indigo-200" />
+
+                    Possui viagem
+
+                  </div>
+
+                </div>
+
+              </section>
+
+              {/* ============================================= */}
+              {/* VIAGENS DO DIA */}
+              {/* ============================================= */}
+
+              <aside className="self-start rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5 xl:sticky xl:top-4">
+
+                {/* CABEÇALHO */}
+
+                <div className="flex items-start justify-between gap-3">
+
+                  <div>
+
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-indigo-600">
+                      Dia selecionado
+                    </p>
+
+                    <h2 className="mt-1 text-lg font-semibold text-slate-800">
+                      {formatarData(
+                        diaSelecionado
+                      )}
+                    </h2>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                      {
+                        viagensDoDiaSelecionado.length
+                      }{" "}
+                      {viagensDoDiaSelecionado.length ===
+                      1
+                        ? "viagem encontrada"
+                        : "viagens encontradas"}
+                    </p>
+
+                  </div>
+
+                  <span className="flex h-9 min-w-9 items-center justify-center rounded-xl bg-indigo-50 px-2 text-sm font-bold text-indigo-700">
+                    {
+                      viagensDoDiaSelecionado.length
+                    }
+                  </span>
+
+                </div>
+
+                {/* LISTA */}
+
+                <div className="mt-5 space-y-3">
+
+                  {viagensDoDiaSelecionado.length ===
+                  0 ? (
+
+                    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
+
+                      <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg shadow-sm">
+                        ○
+                      </div>
+
+                      <p className="mt-3 text-sm font-medium text-slate-600">
+                        Nenhuma viagem
                       </p>
 
-                      {viagensDia.length > 0 && (
-                        <>
-                          <span className="mt-1 mx-auto flex md:hidden h-5 w-5 items-center justify-center rounded-full bg-indigo-100 text-[11px] font-semibold text-indigo-700">
-                            {viagensDia.length}
-                          </span>
+                      <p className="mt-1 text-xs leading-5 text-slate-400">
+                        Não existem
+                        viagens cadastradas
+                        para esta data.
+                      </p>
 
-                          <p className="hidden md:inline-block mt-2 rounded-full bg-indigo-100 px-2 py-1 text-xs font-medium text-indigo-700">
-                            {viagensDia.length} viagem(ns)
-                          </p>
-                        </>
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-            </section>
-
-            <aside className="bg-white rounded-2xl border border-slate-200 p-4 md:p-6 h-fit">
-              <h2 className="text-lg font-semibold text-slate-800">
-                Viagens do dia {formatarData(diaSelecionado)}
-              </h2>
-
-              <p className="text-sm text-slate-500 mt-1">
-                {viagensDoDiaSelecionado.length} viagem(ns) encontrada(s)
-              </p>
-
-              <div className="mt-5 md:mt-6 space-y-4">
-                {viagensDoDiaSelecionado.length === 0 ? (
-                  <p className="text-sm text-slate-400">
-                    Nenhuma viagem cadastrada para este dia.
-                  </p>
-                ) : (
-                  viagensDoDiaSelecionado.map((viagem) => (
-                    <div
-                      key={viagem.id}
-                      className="rounded-xl border border-slate-200 p-4"
-                    >
-                      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
-                        <div>
-                          <p className="font-medium text-slate-800">
-                            {viagem.clientes?.nome ||
-                              "Cliente não informado"}
-                          </p>
-
-                          <p className="text-sm text-slate-500 mt-1">
-                            {viagem.origem} → {viagem.destino}
-                          </p>
-
-                          <p className="text-xs text-slate-500 mt-1">
-                            Saída: {formatarData(viagem.data_saida)} às{" "}
-                            {formatarHora(viagem.data_saida)}
-                          </p>
-
-                          <p className="text-xs text-slate-500">
-                            Retorno: {formatarData(viagem.data_retorno)} às{" "}
-                            {formatarHora(viagem.data_retorno)}
-                          </p>
-                        </div>
-
-                        <span
-                          className={`w-fit px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${corStatus(
-                            viagem.status
-                          )}`}
-                        >
-                          {viagem.status || "Reservada"}
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-3 gap-2 mt-4 text-xs">
-                        <div>
-                          <p className="text-slate-400">Final</p>
-                          <p className="font-medium text-slate-700">
-                            {formatarMoeda(viagem.valor_total)}
-                          </p>
-                        </div>
-
-                        <div>
-                          <p className="text-slate-400">Pago</p>
-                          <p className="font-medium text-green-700">
-                            {formatarMoeda(viagem.valor_pago)}
-                          </p>
-                        </div>
-
-                        <div>
-                          <p className="text-slate-400">Restante</p>
-                          <p className="font-medium text-red-700">
-                            {formatarMoeda(viagem.valor_restante)}
-                          </p>
-                        </div>
-                      </div>
                     </div>
-                  ))
-                )}
-              </div>
-            </aside>
-          </div>
-        )}
+
+                  ) : (
+
+                    viagensDoDiaSelecionado.map(
+                      (viagem) => (
+                        <article
+                          key={
+                            viagem.id
+                          }
+                          className="rounded-2xl border border-slate-200 p-4 transition hover:border-slate-300"
+                        >
+
+                          {/* CLIENTE + STATUS */}
+
+                          <div className="flex items-start justify-between gap-3">
+
+                            <div className="min-w-0">
+
+                              <p className="truncate text-sm font-semibold text-slate-800">
+                                {viagem
+                                  .clientes
+                                  ?.nome ||
+                                  "Cliente não informado"}
+                              </p>
+
+                              <p className="mt-1 text-xs text-slate-500">
+                                {
+                                  viagem.origem
+                                }{" "}
+                                <span className="text-slate-300">
+                                  →
+                                </span>{" "}
+                                {
+                                  viagem.destino
+                                }
+                              </p>
+
+                            </div>
+
+                            <span
+                              className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-medium ${corStatus(
+                                viagem.status
+                              )}`}
+                            >
+                              {viagem.status ||
+                                "Reservada"}
+                            </span>
+
+                          </div>
+
+                          {/* DATAS */}
+
+                          <div className="mt-4 grid grid-cols-2 gap-2">
+
+                            <div className="rounded-xl bg-slate-50 p-2.5">
+
+                              <p className="text-[10px] uppercase tracking-wide text-slate-400">
+                                Saída
+                              </p>
+
+                              <p className="mt-1 text-xs font-medium text-slate-700">
+                                {formatarData(
+                                  viagem.data_saida
+                                )}
+                              </p>
+
+                              <p className="mt-0.5 text-[11px] text-slate-500">
+                                {
+                                  formatarHora(
+                                    viagem.data_saida
+                                  )
+                                }
+                              </p>
+
+                            </div>
+
+                            <div className="rounded-xl bg-slate-50 p-2.5">
+
+                              <p className="text-[10px] uppercase tracking-wide text-slate-400">
+                                Retorno
+                              </p>
+
+                              <p className="mt-1 text-xs font-medium text-slate-700">
+                                {formatarData(
+                                  viagem.data_retorno
+                                )}
+                              </p>
+
+                              <p className="mt-0.5 text-[11px] text-slate-500">
+                                {
+                                  formatarHora(
+                                    viagem.data_retorno
+                                  )
+                                }
+                              </p>
+
+                            </div>
+
+                          </div>
+
+                          {/* ÔNIBUS */}
+
+                          {viagem.tipo_onibus && (
+                            <div className="mt-3">
+
+                              <p className="text-[10px] uppercase tracking-wide text-slate-400">
+                                Veículo
+                              </p>
+
+                              <p className="mt-1 text-xs font-medium text-slate-600">
+                                {
+                                  viagem.tipo_onibus
+                                }
+                              </p>
+
+                            </div>
+                          )}
+
+                          {/* FINANCEIRO */}
+
+                          <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4">
+
+                            <div className="min-w-0">
+
+                              <p className="text-[10px] text-slate-400">
+                                Total
+                              </p>
+
+                              <p className="mt-1 truncate text-xs font-semibold text-slate-700">
+                                {formatarMoeda(
+                                  viagem.valor_total
+                                )}
+                              </p>
+
+                            </div>
+
+                            <div className="min-w-0">
+
+                              <p className="text-[10px] text-slate-400">
+                                Pago
+                              </p>
+
+                              <p className="mt-1 truncate text-xs font-semibold text-green-700">
+                                {formatarMoeda(
+                                  viagem.valor_pago
+                                )}
+                              </p>
+
+                            </div>
+
+                            <div className="min-w-0">
+
+                              <p className="text-[10px] text-slate-400">
+                                Restante
+                              </p>
+
+                              <p className="mt-1 truncate text-xs font-semibold text-red-600">
+                                {formatarMoeda(
+                                  viagem.valor_restante
+                                )}
+                              </p>
+
+                            </div>
+
+                          </div>
+
+                        </article>
+                      )
+                    )
+                  )}
+
+                </div>
+
+              </aside>
+
+            </div>
+          )}
+
+        </div>
+
       </div>
     </>
   )
