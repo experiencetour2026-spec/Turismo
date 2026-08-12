@@ -107,7 +107,7 @@ export default function Viagens() {
   }
 
   // =========================================================
-  // ABRIR / FECHAR DETALHES
+  // DETALHES
   // =========================================================
 
   function alternarDetalhes(id) {
@@ -209,9 +209,7 @@ export default function Viagens() {
       }`
     }
 
-    return (
-      viagem.matricula_motorista_1 || "-"
-    )
+    return viagem.matricula_motorista_1 || "-"
   }
 
   // =========================================================
@@ -318,7 +316,7 @@ export default function Viagens() {
         />
       )}
 
-      <div className="min-h-screen bg-slate-100 px-3 py-4 sm:px-4 md:p-6">
+      <div className="min-h-screen bg-slate-100 px-3 py-4 sm:px-4 md:p-5">
         <div className="mx-auto max-w-[1500px]">
 
           {/* ================================================= */}
@@ -347,8 +345,7 @@ export default function Viagens() {
                 </h1>
 
                 <p className="mt-0.5 text-xs text-slate-500 sm:text-sm">
-                  Acompanhamento das viagens
-                  atuais e futuras
+                  Acompanhamento das viagens atuais e futuras
                 </p>
 
               </div>
@@ -358,132 +355,103 @@ export default function Viagens() {
           </header>
 
           {/* ================================================= */}
-          {/* INDICADORES COMPACTOS */}
+          {/* INDICADORES */}
           {/* ================================================= */}
 
           <section className="mb-3 grid grid-cols-3 gap-2 sm:gap-3">
 
-            {/* TOTAL */}
-
             <div
-              className={`${cardClass} px-3 py-2.5 sm:px-4 sm:py-3`}
+              className={`${cardClass} px-3 py-2.5 lg:px-3.5 lg:py-2.5`}
             >
-
               <div className="flex items-center justify-between gap-2">
 
                 <div>
-
-                  <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 sm:text-[10px]">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                     Total
                   </p>
 
-                  <p className="mt-0.5 text-xl font-semibold leading-none text-slate-800 sm:text-2xl">
+                  <p className="mt-0.5 text-xl font-semibold leading-none text-slate-800 lg:text-2xl">
                     {resumo.total}
                   </p>
-
                 </div>
 
-                <div className="hidden h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-[10px] font-bold text-slate-500 sm:flex">
+                <div className="hidden h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-[10px] font-bold text-slate-500 sm:flex">
                   V
                 </div>
 
               </div>
-
             </div>
 
-            {/* CONFIRMADAS */}
-
             <div
-              className={`${cardClass} px-3 py-2.5 sm:px-4 sm:py-3`}
+              className={`${cardClass} px-3 py-2.5 lg:px-3.5 lg:py-2.5`}
             >
-
               <div className="flex items-center justify-between gap-2">
 
                 <div>
-
-                  <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 sm:text-[10px]">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                     Confirmadas
                   </p>
 
-                  <p className="mt-0.5 text-xl font-semibold leading-none text-emerald-700 sm:text-2xl">
-                    {
-                      resumo.confirmadas
-                    }
+                  <p className="mt-0.5 text-xl font-semibold leading-none text-emerald-700 lg:text-2xl">
+                    {resumo.confirmadas}
                   </p>
-
                 </div>
 
-                <div className="hidden h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-[10px] font-bold text-emerald-700 sm:flex">
+                <div className="hidden h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-[9px] font-bold text-emerald-700 sm:flex">
                   OK
                 </div>
 
               </div>
-
             </div>
 
-            {/* CANCELADAS */}
-
             <div
-              className={`${cardClass} px-3 py-2.5 sm:px-4 sm:py-3`}
+              className={`${cardClass} px-3 py-2.5 lg:px-3.5 lg:py-2.5`}
             >
-
               <div className="flex items-center justify-between gap-2">
 
                 <div>
-
-                  <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 sm:text-[10px]">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                     Canceladas
                   </p>
 
-                  <p className="mt-0.5 text-xl font-semibold leading-none text-red-600 sm:text-2xl">
-                    {
-                      resumo.canceladas
-                    }
+                  <p className="mt-0.5 text-xl font-semibold leading-none text-red-600 lg:text-2xl">
+                    {resumo.canceladas}
                   </p>
-
                 </div>
 
-                <div className="hidden h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-[10px] font-bold text-red-600 sm:flex">
+                <div className="hidden h-7 w-7 items-center justify-center rounded-lg bg-red-50 text-[9px] font-bold text-red-600 sm:flex">
                   X
                 </div>
 
               </div>
-
             </div>
 
           </section>
 
           {/* ================================================= */}
-          {/* PESQUISA E FILTRO */}
+          {/* FILTROS */}
           {/* ================================================= */}
 
           <section
-            className={`${cardClass} mb-3 p-3 sm:p-4`}
+            className={`${cardClass} mb-3 p-3`}
           >
 
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
 
               <div>
-
-                <h2 className="text-sm font-semibold text-slate-800 sm:text-base">
+                <h2 className="text-sm font-semibold text-slate-800">
                   Lista de viagens
                 </h2>
 
                 <p className="mt-0.5 text-[11px] text-slate-500">
-                  {
-                    viagensFiltradas.length
-                  }{" "}
-                  {viagensFiltradas.length ===
-                  1
+                  {viagensFiltradas.length}{" "}
+                  {viagensFiltradas.length === 1
                     ? "viagem encontrada"
                     : "viagens encontradas"}
                 </p>
-
               </div>
 
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_160px] lg:w-[560px]">
-
-                {/* BUSCA */}
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_150px] lg:w-[520px]">
 
                 <div className="relative">
 
@@ -494,12 +462,10 @@ export default function Viagens() {
                   <input
                     value={busca}
                     onChange={(e) =>
-                      setBusca(
-                        e.target.value
-                      )
+                      setBusca(e.target.value)
                     }
                     placeholder="Cliente, rota, ônibus, carro..."
-                    className="h-9 w-full rounded-xl border border-slate-300 bg-white pl-9 pr-9 text-xs text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 sm:text-sm"
+                    className="h-9 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-9 text-xs text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
                   />
 
                   {busca && (
@@ -517,18 +483,14 @@ export default function Viagens() {
 
                 </div>
 
-                {/* FILTRO */}
-
                 <select
-                  value={
-                    filtroStatus
-                  }
+                  value={filtroStatus}
                   onChange={(e) =>
                     setFiltroStatus(
                       e.target.value
                     )
                   }
-                  className="h-9 rounded-xl border border-slate-300 bg-white px-3 text-xs text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 sm:text-sm"
+                  className="h-9 rounded-lg border border-slate-300 bg-white px-3 text-xs text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
                 >
                   <option value="Todas">
                     Todas
@@ -550,53 +512,39 @@ export default function Viagens() {
           </section>
 
           {/* ================================================= */}
-          {/* LISTA */}
+          {/* VIAGENS */}
           {/* ================================================= */}
 
           <section
-            className={`${cardClass} p-3 sm:p-4`}
+            className={`${cardClass} p-3`}
           >
-
-            {/* ================================================= */}
-            {/* LOADING */}
-            {/* ================================================= */}
 
             {loading ? (
 
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 xl:grid-cols-3">
 
                 {Array.from({
                   length: 6,
-                }).map(
-                  (_, index) => (
-                    <div
-                      key={index}
-                      className="animate-pulse rounded-xl border border-slate-100 p-3"
-                    >
+                }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="animate-pulse rounded-xl border border-slate-100 p-3"
+                  >
 
-                      <div className="h-4 w-1/2 rounded bg-slate-200" />
+                    <div className="h-4 w-1/2 rounded bg-slate-200" />
 
-                      <div className="mt-2 h-3 w-1/3 rounded bg-slate-100" />
+                    <div className="mt-2 h-3 w-1/3 rounded bg-slate-100" />
 
-                      <div className="mt-3 h-10 rounded-lg bg-slate-100" />
+                    <div className="mt-3 h-9 rounded-lg bg-slate-100" />
 
-                      <div className="mt-2 grid grid-cols-2 gap-2">
-                        <div className="h-10 rounded-lg bg-slate-100" />
-                        <div className="h-10 rounded-lg bg-slate-100" />
-                      </div>
+                    <div className="mt-2 h-12 rounded-lg bg-slate-100" />
 
-                    </div>
-                  )
-                )}
+                  </div>
+                ))}
 
               </div>
 
-            ) : viagensFiltradas.length ===
-              0 ? (
-
-              /* ============================================= */
-              /* SEM RESULTADOS */
-              /* ============================================= */
+            ) : viagensFiltradas.length === 0 ? (
 
               <div className="py-10 text-center">
 
@@ -608,9 +556,8 @@ export default function Viagens() {
                   Nenhuma viagem encontrada
                 </p>
 
-                <p className="mx-auto mt-1 max-w-sm text-xs leading-5 text-slate-400">
-                  Tente alterar a pesquisa ou
-                  o filtro de status.
+                <p className="mt-1 text-xs text-slate-400">
+                  Tente alterar a pesquisa ou o filtro.
                 </p>
 
               </div>
@@ -619,10 +566,10 @@ export default function Viagens() {
 
               <>
                 {/* =========================================== */}
-                {/* GRID DE VIAGENS */}
+                {/* GRID - 3 COLUNAS JÁ NO XL */}
                 {/* =========================================== */}
 
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">
+                <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 xl:grid-cols-3">
 
                   {viagensExibidas.map(
                     (viagem) => {
@@ -637,44 +584,36 @@ export default function Viagens() {
 
                       return (
                         <article
-                          key={
-                            viagem.id
-                          }
+                          key={viagem.id}
                           className="rounded-xl border border-slate-200 bg-white p-3 transition hover:border-indigo-200 hover:shadow-sm"
                         >
 
                           {/* ================================= */}
-                          {/* CLIENTE + STATUS */}
+                          {/* CLIENTE */}
                           {/* ================================= */}
 
                           <div className="flex items-start justify-between gap-2">
 
                             <div className="min-w-0">
 
-                              <h3 className="truncate text-sm font-semibold text-slate-800">
-                                {viagem
-                                  .clientes
-                                  ?.nome ||
+                              <h3 className="truncate text-[13px] font-semibold leading-5 text-slate-800">
+                                {viagem.clientes?.nome ||
                                   "Cliente não informado"}
                               </h3>
 
-                              <p className="mt-0.5 truncate text-[10px] text-slate-400">
-                                {viagem
-                                  .clientes
-                                  ?.cpf_cnpj ||
+                              <p className="truncate text-[11px] text-slate-400">
+                                {viagem.clientes?.cpf_cnpj ||
                                   "Documento não informado"}
                               </p>
 
                             </div>
 
                             <span
-                              className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-semibold ${statusClasse(
+                              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusClasse(
                                 statusViagem
                               )}`}
                             >
-                              {
-                                statusViagem
-                              }
+                              {statusViagem}
                             </span>
 
                           </div>
@@ -683,35 +622,38 @@ export default function Viagens() {
                           {/* ROTA */}
                           {/* ================================= */}
 
-                          <div className="mt-2.5 rounded-lg bg-slate-50 px-2.5 py-2">
+                          <div className="mt-2 rounded-lg bg-slate-50 px-2.5 py-1.5">
 
-                            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">
-                              Rota
-                            </p>
+                            <div className="flex items-center gap-2">
 
-                            <p className="mt-0.5 truncate text-xs font-semibold text-slate-700">
-                              {viagem.origem ||
-                                "-"}{" "}
-                              <span className="text-slate-300">
-                                →
-                              </span>{" "}
-                              {viagem.destino ||
-                                "-"}
-                            </p>
+                              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                Rota
+                              </span>
+
+                              <p className="min-w-0 truncate text-[12px] font-semibold text-slate-700">
+                                {viagem.origem || "-"}{" "}
+                                <span className="text-slate-300">
+                                  →
+                                </span>{" "}
+                                {viagem.destino || "-"}
+                              </p>
+
+                            </div>
 
                           </div>
 
                           {/* ================================= */}
-                          {/* PRINCIPAIS INFORMAÇÕES */}
+                          {/* INFORMAÇÕES PRINCIPAIS */}
+                          {/* MOBILE = 2x2 / DESKTOP = 4 COLUNAS */}
                           {/* ================================= */}
 
-                          <div className="mt-2 grid grid-cols-2 gap-1.5">
+                          <div className="mt-2 grid grid-cols-2 overflow-hidden rounded-lg border border-slate-100 sm:grid-cols-4 xl:grid-cols-4">
 
                             {/* SAÍDA */}
 
-                            <div className="min-w-0 rounded-lg border border-slate-100 px-2 py-1.5">
+                            <div className="min-w-0 border-b border-r border-slate-100 px-2 py-1.5 sm:border-b-0">
 
-                              <p className="text-[9px] uppercase tracking-wide text-slate-400">
+                              <p className="text-[9px] font-medium uppercase tracking-wide text-slate-400">
                                 Saída
                               </p>
 
@@ -725,9 +667,9 @@ export default function Viagens() {
 
                             {/* TIPO */}
 
-                            <div className="min-w-0 rounded-lg border border-slate-100 px-2 py-1.5">
+                            <div className="min-w-0 border-b border-slate-100 px-2 py-1.5 sm:border-b-0 sm:border-r">
 
-                              <p className="text-[9px] uppercase tracking-wide text-slate-400">
+                              <p className="text-[9px] font-medium uppercase tracking-wide text-slate-400">
                                 Tipo
                               </p>
 
@@ -740,9 +682,9 @@ export default function Viagens() {
 
                             {/* VALOR */}
 
-                            <div className="min-w-0 rounded-lg border border-slate-100 px-2 py-1.5">
+                            <div className="min-w-0 border-r border-slate-100 px-2 py-1.5">
 
-                              <p className="text-[9px] uppercase tracking-wide text-slate-400">
+                              <p className="text-[9px] font-medium uppercase tracking-wide text-slate-400">
                                 Valor
                               </p>
 
@@ -756,10 +698,10 @@ export default function Viagens() {
 
                             {/* PAGAMENTO */}
 
-                            <div className="min-w-0 rounded-lg border border-slate-100 px-2 py-1.5">
+                            <div className="min-w-0 px-2 py-1.5">
 
-                              <p className="text-[9px] uppercase tracking-wide text-slate-400">
-                                Pagamento
+                              <p className="text-[9px] font-medium uppercase tracking-wide text-slate-400">
+                                Pagto.
                               </p>
 
                               <p
@@ -776,7 +718,7 @@ export default function Viagens() {
                           </div>
 
                           {/* ================================= */}
-                          {/* MAIS INFORMAÇÕES */}
+                          {/* EXPANDIR */}
                           {/* ================================= */}
 
                           <button
@@ -786,7 +728,7 @@ export default function Viagens() {
                                 viagem.id
                               )
                             }
-                            className="mt-2.5 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-[10px] font-semibold text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+                            className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
                           >
                             {detalhesAberto
                               ? "Ocultar informações"
@@ -794,134 +736,114 @@ export default function Viagens() {
                           </button>
 
                           {/* ================================= */}
-                          {/* DETALHES EXPANDIDOS */}
+                          {/* DETALHES */}
                           {/* ================================= */}
 
                           {detalhesAberto && (
-                            <div className="mt-2.5 grid grid-cols-2 gap-1.5 border-t border-slate-100 pt-2.5">
+                            <div className="mt-2 border-t border-slate-100 pt-2">
 
-                              {/* RETORNO */}
+                              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
 
-                              <div className="rounded-lg bg-slate-50 px-2 py-1.5">
+                                <div>
+                                  <p className="text-[9px] uppercase tracking-wide text-slate-400">
+                                    Retorno
+                                  </p>
 
-                                <p className="text-[9px] text-slate-400">
-                                  Retorno
-                                </p>
-
-                                <p className="mt-0.5 text-[10px] font-medium text-slate-700">
-                                  {formatarDataCompacta(
-                                    viagem.data_retorno
-                                  )}
-                                </p>
-
-                              </div>
-
-                              {/* KM */}
-
-                              <div className="rounded-lg bg-slate-50 px-2 py-1.5">
-
-                                <p className="text-[9px] text-slate-400">
-                                  KM total
-                                </p>
-
-                                <p className="mt-0.5 text-[10px] font-medium text-slate-700">
-                                  {viagem.km_total ||
-                                    0}{" "}
-                                  km
-                                </p>
-
-                              </div>
-
-                              {/* ÔNIBUS */}
-
-                              <div className="rounded-lg bg-slate-50 px-2 py-1.5">
-
-                                <p className="text-[9px] text-slate-400">
-                                  Ônibus
-                                </p>
-
-                                <p className="mt-0.5 line-clamp-2 text-[10px] font-medium text-slate-700">
-                                  {viagem.tipo_onibus ||
-                                    "Não informado"}
-                                </p>
-
-                              </div>
-
-                              {/* CARRO */}
-
-                              <div className="rounded-lg bg-slate-50 px-2 py-1.5">
-
-                                <p className="text-[9px] text-slate-400">
-                                  Nº do carro
-                                </p>
-
-                                <p className="mt-0.5 text-[10px] font-medium text-slate-700">
-                                  {viagem.numero_carro ||
-                                    "-"}
-                                </p>
-
-                              </div>
-
-                              {/* MOTORISTA */}
-
-                              <div className="col-span-2 rounded-lg bg-slate-50 px-2 py-1.5">
-
-                                <p className="text-[9px] text-slate-400">
-                                  Motorista
-                                </p>
-
-                                <p className="mt-0.5 break-words text-[10px] font-medium text-slate-700">
-                                  {mostrarMotorista(
-                                    viagem
-                                  )}
-                                </p>
-
-                              </div>
-
-                              {/* VALORES */}
-
-                              <div className="rounded-lg bg-slate-50 px-2 py-1.5">
-
-                                <p className="text-[9px] text-slate-400">
-                                  Pago
-                                </p>
-
-                                <p className="mt-0.5 text-[10px] font-semibold text-emerald-700">
-                                  {formatarMoeda(
-                                    viagem.valor_pago
-                                  )}
-                                </p>
-
-                              </div>
-
-                              <div className="rounded-lg bg-slate-50 px-2 py-1.5">
-
-                                <p className="text-[9px] text-slate-400">
-                                  Restante
-                                </p>
-
-                                <p className="mt-0.5 text-[10px] font-semibold text-red-600">
-                                  {formatarMoeda(
-                                    viagem.valor_restante
-                                  )}
-                                </p>
-
-                              </div>
-
-                              {/* DATA COMPLETA */}
-
-                              <div className="col-span-2 mt-0.5 border-t border-slate-100 pt-2">
-
-                                <p className="text-[9px] leading-4 text-slate-400">
-                                  Saída completa:{" "}
-                                  <span className="font-medium text-slate-600">
-                                    {formatarData(
-                                      viagem.data_saida
+                                  <p className="mt-0.5 text-[11px] font-medium text-slate-700">
+                                    {formatarDataCompacta(
+                                      viagem.data_retorno
                                     )}
-                                  </span>
-                                </p>
+                                  </p>
+                                </div>
+
+                                <div>
+                                  <p className="text-[9px] uppercase tracking-wide text-slate-400">
+                                    KM
+                                  </p>
+
+                                  <p className="mt-0.5 text-[11px] font-medium text-slate-700">
+                                    {viagem.km_total || 0} km
+                                  </p>
+                                </div>
+
+                                <div>
+                                  <p className="text-[9px] uppercase tracking-wide text-slate-400">
+                                    Carro
+                                  </p>
+
+                                  <p className="mt-0.5 text-[11px] font-medium text-slate-700">
+                                    {viagem.numero_carro ||
+                                      "-"}
+                                  </p>
+                                </div>
+
+                                <div>
+                                  <p className="text-[9px] uppercase tracking-wide text-slate-400">
+                                    Ônibus
+                                  </p>
+
+                                  <p className="mt-0.5 line-clamp-2 text-[11px] font-medium text-slate-700">
+                                    {viagem.tipo_onibus ||
+                                      "Não informado"}
+                                  </p>
+                                </div>
+
+                                <div className="col-span-2">
+                                  <p className="text-[9px] uppercase tracking-wide text-slate-400">
+                                    Motorista
+                                  </p>
+
+                                  <p className="mt-0.5 break-words text-[11px] font-medium text-slate-700">
+                                    {mostrarMotorista(
+                                      viagem
+                                    )}
+                                  </p>
+                                </div>
 
                               </div>
+
+                              {/* FINANCEIRO */}
+
+                              <div className="mt-2 grid grid-cols-2 overflow-hidden rounded-lg bg-slate-50">
+
+                                <div className="border-r border-slate-100 px-2 py-1.5">
+
+                                  <p className="text-[9px] text-slate-400">
+                                    Pago
+                                  </p>
+
+                                  <p className="mt-0.5 text-[11px] font-semibold text-emerald-700">
+                                    {formatarMoeda(
+                                      viagem.valor_pago
+                                    )}
+                                  </p>
+
+                                </div>
+
+                                <div className="px-2 py-1.5">
+
+                                  <p className="text-[9px] text-slate-400">
+                                    Restante
+                                  </p>
+
+                                  <p className="mt-0.5 text-[11px] font-semibold text-red-600">
+                                    {formatarMoeda(
+                                      viagem.valor_restante
+                                    )}
+                                  </p>
+
+                                </div>
+
+                              </div>
+
+                              <p className="mt-2 text-[10px] text-slate-400">
+                                Saída completa:{" "}
+                                <span className="font-medium text-slate-600">
+                                  {formatarData(
+                                    viagem.data_saida
+                                  )}
+                                </span>
+                              </p>
 
                             </div>
                           )}
@@ -930,7 +852,7 @@ export default function Viagens() {
                           {/* AÇÕES */}
                           {/* ================================= */}
 
-                          <div className="mt-2.5 grid grid-cols-[1fr_auto] gap-1.5">
+                          <div className="mt-2 grid grid-cols-[1fr_auto] gap-1.5">
 
                             <button
                               type="button"
@@ -939,7 +861,7 @@ export default function Viagens() {
                                   `/viagens/${viagem.id}`
                                 )
                               }
-                              className="rounded-lg bg-indigo-600 px-3 py-2 text-[10px] font-semibold text-white transition hover:bg-indigo-700"
+                              className="rounded-lg bg-indigo-600 px-3 py-1.5 text-[11px] font-semibold text-white transition hover:bg-indigo-700"
                             >
                               Ver detalhes
                             </button>
@@ -955,7 +877,7 @@ export default function Viagens() {
                                   viagem.id
                                 )
                               }
-                              className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-[10px] font-medium text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="rounded-lg border border-red-100 bg-red-50 px-3 py-1.5 text-[11px] font-medium text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               {excluindoId ===
                               viagem.id
@@ -976,18 +898,12 @@ export default function Viagens() {
                 {/* CARREGAR MAIS */}
                 {/* =========================================== */}
 
-                <div className="mt-4 border-t border-slate-100 pt-3">
+                <div className="mt-3 border-t border-slate-100 pt-3">
 
                   <p className="mb-2 text-center text-[10px] text-slate-400">
                     Mostrando{" "}
-                    {
-                      viagensExibidas.length
-                    }{" "}
-                    de{" "}
-                    {
-                      viagensFiltradas.length
-                    }{" "}
-                    viagens
+                    {viagensExibidas.length} de{" "}
+                    {viagensFiltradas.length} viagens
                   </p>
 
                   {limiteExibicao <
@@ -1000,7 +916,7 @@ export default function Viagens() {
                             atual + 9
                         )
                       }
-                      className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+                      className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
                     >
                       Carregar mais viagens
                     </button>
